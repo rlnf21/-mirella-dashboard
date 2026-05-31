@@ -1,0 +1,15 @@
+name: Keep Render Awake
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Dashboard
+        run: curl -sI --max-time 20 https://mirella-dashboard.onrender.com/dashboard -o /dev/null
+      - name: Ping Render Health
+        run: curl -sI --max-time 20 https://mirella-dashboard.onrender.com/api/health -o /dev/null
