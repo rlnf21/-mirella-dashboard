@@ -130,6 +130,15 @@ def get_static_data():
     static_cache["expires_at"] = now + 600  # 10 min
     return campaigns, ads
 
+def fetch_breakdown(since_date, until_date, breakdown):
+    data = fetch_all(f"{AD_ACCOUNT}/insights", {
+        "time_range": json.dumps({"since": since_date.isoformat(), "until": until_date.isoformat()}),
+        "breakdowns": breakdown,
+        "fields": "spend,impressions,clicks,cpc,ctr",
+        "limit": 20
+    })
+    return data
+
 def fetch_insights_for_range(since_date, until_date, prev_since, prev_until):
     def tr(s, u):
         return json.dumps({"since": s.isoformat(), "until": u.isoformat()})
@@ -242,97 +251,116 @@ def fmt_delta(val, reverse=False):
 
 # ===== ROTAS =====
 
+def parse_period_params():
+    today = datetime.date.today()
+    since_param = request.args.get("since")
+    until_param = request.args.get("until")
+    days_param = request.args.get("days")
+
+    if since_param and until_param:
+        since = datetime.date.fromisoformat(since_param)
+        until = datetime.date.fromisoformat(until_param)
+    elif days_param:
+        days = int(days_param)
+        since = today - datetime.timedelta(days=days)
+        until = today
+    else:
+        since = today - datetime.timedelta(days=90)
+        until = today
+
+    period_days = (until - since).days
+    if period_days <= 7:
+        active_period = "7"
+    elif period_days <= 30:
+        active_period = "30"
+    elif period_days <= 90:
+        active_period = "90"
+    else:
+        active_period = "custom"
+
+    return since, until, active_period
+
+def build_cards(cur, prev):
+    c_spend = safe_float(cur.get("spend"))
+    c_imps = safe_int(cur.get("impressions"))
+    c_clicks = safe_int(cur.get("clicks"))
+    c_ctr = safe_float(cur.get("ctr"))
+    c_cpc = safe_float(cur.get("cpc"))
+    c_cpm = safe_float(cur.get("cpm"))
+    c_reach = safe_int(cur.get("reach"))
+    c_leads, c_cpl = parse_actions(cur)
+
+    p_spend = safe_float(prev.get("spend"))
+    p_imps = safe_int(prev.get("impressions"))
+    p_clicks = safe_int(prev.get("clicks"))
+    p_ctr = safe_float(prev.get("ctr"))
+    p_cpc = safe_float(prev.get("cpc"))
+    p_cpm = safe_float(prev.get("cpm"))
+    p_reach = safe_int(prev.get("reach"))
+    p_leads, p_cpl = parse_actions(prev)
+
+    return [
+        {"icon": "fa-coins", "label": "Gasto", "value": fmt_money(c_spend),
+         "delta": fmt_delta(pct(c_spend, p_spend))},
+        {"icon": "fa-users", "label": "Leads", "value": str(c_leads),
+         "delta": fmt_delta(pct(c_leads, p_leads))},
+        {"icon": "fa-chart-pie", "label": "ROAS", "value": f"{c_leads/max(c_spend,1):.1f}x",
+         "delta": fmt_delta(pct(c_leads/max(c_spend,1), p_leads/max(p_spend,1)))},
+        {"icon": "fa-mouse-pointer", "label": "CPC", "value": fmt_cpc(c_cpc),
+         "delta": fmt_delta(pct(c_cpc, p_cpc), reverse=True)},
+        {"icon": "fa-percent", "label": "CTR", "value": fmt_ctr(c_ctr),
+         "delta": fmt_delta(pct(c_ctr, p_ctr))},
+        {"icon": "fa-eye", "label": "CPM", "value": fmt_cpc(c_cpm),
+         "delta": fmt_delta(pct(c_cpm, p_cpm), reverse=True)},
+    ]
+
+def build_camp_table(camp_rows, since, until):
+    prev_period_len = (until - since).days
+    prev_until = since - datetime.timedelta(days=1)
+    prev_since = since - datetime.timedelta(days=prev_period_len + 1)
+    camp_map = {}
+    camp_prev = fetch_all(f"{AD_ACCOUNT}/insights", {
+        "time_range": json.dumps({"since": prev_since.isoformat(), "until": prev_until.isoformat()}),
+        "level": "campaign",
+        "fields": "campaign_name,spend",
+        "limit": 50
+    })
+    for c in camp_prev:
+        camp_map[c.get("campaign_name")] = c
+
+    table = []
+    for c in camp_rows:
+        name = c.get("campaign_name", "N/A")
+        sp = safe_float(c.get("spend"))
+        cpc = safe_float(c.get("cpc"))
+        ctr = safe_float(c.get("ctr"))
+        leads, cpl = parse_actions(c)
+        p_sp = safe_float(camp_map.get(name, {}).get("spend"))
+        table.append({
+            "name": name,
+            "spend": fmt_money(sp),
+            "spend_raw": sp,
+            "cpc": fmt_cpc(cpc),
+            "ctr": fmt_ctr(ctr),
+            "leads": leads,
+            "cpl": fmt_cpc(cpl) if cpl else "—",
+            "delta": fmt_delta(pct(sp, p_sp)) if p_sp else {"html": "", "icon": "", "pct": ""}
+        })
+    return table
+
 @app.route("/dashboard")
 def dashboard():
     try:
-        today = datetime.date.today()
-        since_param = request.args.get("since")
-        until_param = request.args.get("until")
-        days_param = request.args.get("days")
-
-        if since_param and until_param:
-            since = datetime.date.fromisoformat(since_param)
-            until = datetime.date.fromisoformat(until_param)
-        elif days_param:
-            days = int(days_param)
-            since = today - datetime.timedelta(days=days)
-            until = today
-        else:
-            since = today - datetime.timedelta(days=90)
-            until = today
-
+        since, until, active_period = parse_period_params()
         d = get_data(since, until)
         cur, prev = d["current"], d["previous"]
-
-        c_spend = safe_float(cur.get("spend"))
-        c_imps = safe_int(cur.get("impressions"))
-        c_clicks = safe_int(cur.get("clicks"))
-        c_ctr = safe_float(cur.get("ctr"))
-        c_cpc = safe_float(cur.get("cpc"))
-        c_cpm = safe_float(cur.get("cpm"))
-        c_reach = safe_int(cur.get("reach"))
-        c_leads, c_cpl = parse_actions(cur)
-
-        p_spend = safe_float(prev.get("spend"))
-        p_imps = safe_int(prev.get("impressions"))
-        p_clicks = safe_int(prev.get("clicks"))
-        p_ctr = safe_float(prev.get("ctr"))
-        p_cpc = safe_float(prev.get("cpc"))
-        p_cpm = safe_float(prev.get("cpm"))
-        p_reach = safe_int(prev.get("reach"))
-        p_leads, p_cpl = parse_actions(prev)
-
-        cards = [
-            {"icon": "fa-coins", "label": "Gasto", "value": fmt_money(c_spend),
-             "delta": fmt_delta(pct(c_spend, p_spend))},
-            {"icon": "fa-users", "label": "Leads", "value": str(c_leads),
-             "delta": fmt_delta(pct(c_leads, p_leads))},
-            {"icon": "fa-chart-pie", "label": "ROAS", "value": f"{c_leads/max(c_spend,1):.1f}x",
-             "delta": fmt_delta(pct(c_leads/max(c_spend,1), p_leads/max(p_spend,1)))},
-            {"icon": "fa-mouse-pointer", "label": "CPC", "value": fmt_cpc(c_cpc),
-             "delta": fmt_delta(pct(c_cpc, p_cpc), reverse=True)},
-            {"icon": "fa-percent", "label": "CTR", "value": fmt_ctr(c_ctr),
-             "delta": fmt_delta(pct(c_ctr, p_ctr))},
-            {"icon": "fa-eye", "label": "CPM", "value": fmt_cpc(c_cpm),
-             "delta": fmt_delta(pct(c_cpm, p_cpm), reverse=True)},
-        ]
+        cards = build_cards(cur, prev)
 
         daily_labels = [x.get("date_start","") for x in d["daily"]]
         daily_spend = [safe_float(x.get("spend")) for x in d["daily"]]
         daily_imps = [safe_int(x.get("impressions")) for x in d["daily"]]
 
-        # Mapa de campanhas anteriores para comparação na tabela
-        prev_period_len = (until - since).days
-        prev_until = since - datetime.timedelta(days=1)
-        prev_since = since - datetime.timedelta(days=prev_period_len + 1)
-        camp_map = {}
-        camp_prev = fetch_all(f"{AD_ACCOUNT}/insights", {
-            "time_range": json.dumps({"since": prev_since.isoformat(), "until": prev_until.isoformat()}),
-            "level": "campaign",
-            "fields": "campaign_name,spend",
-            "limit": 50
-        })
-        for c in camp_prev:
-            camp_map[c.get("campaign_name")] = c
-
-        camp_table = []
-        for c in d["camp_rows"]:
-            name = c.get("campaign_name", "N/A")
-            sp = safe_float(c.get("spend"))
-            cpc = safe_float(c.get("cpc"))
-            ctr = safe_float(c.get("ctr"))
-            leads, cpl = parse_actions(c)
-            p_sp = safe_float(camp_map.get(name, {}).get("spend"))
-            camp_table.append({
-                "name": name,
-                "spend": fmt_money(sp),
-                "spend_raw": sp,
-                "cpc": fmt_cpc(cpc),
-                "ctr": fmt_ctr(ctr),
-                "leads": leads,
-                "cpl": fmt_cpc(cpl) if cpl else "—",
-                "delta": fmt_delta(pct(sp, p_sp)) if p_sp else {"html": "", "icon": "", "pct": ""}
-            })
+        camp_table = build_camp_table(d["camp_rows"], since, until)
 
         ads_list = []
         for ad in d["ads"][:20]:
@@ -347,17 +375,6 @@ def dashboard():
                 "ctr": fmt_ctr(safe_float(ins.get("ctr"))),
                 "spend": fmt_money(safe_float(ins.get("spend")))
             })
-
-        # Determinar qual aba está ativa
-        period_days = (until - since).days
-        if period_days <= 7:
-            active_period = "7"
-        elif period_days <= 30:
-            active_period = "30"
-        elif period_days <= 90:
-            active_period = "90"
-        else:
-            active_period = "custom"
 
         return render_template("dashboard.html",
             cards=cards,
@@ -375,6 +392,69 @@ def dashboard():
         )
     except Exception as e:
         print(f"ERRO no dashboard: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        return f"<h2>Erro ao carregar dashboard</h2><pre>{e}</pre>", 500
+
+@app.route("/dashboard/novo")
+def dashboard_novo():
+    try:
+        since, until, active_period = parse_period_params()
+        d = get_data(since, until)
+        cur, prev = d["current"], d["previous"]
+        cards = build_cards(cur, prev)
+
+        daily_labels = [x.get("date_start","") for x in d["daily"]]
+        daily_spend = [safe_float(x.get("spend")) for x in d["daily"]]
+        daily_imps = [safe_int(x.get("impressions")) for x in d["daily"]]
+
+        camp_table = build_camp_table(d["camp_rows"], since, until)
+
+        # Gender breakdown
+        gender_data = fetch_breakdown(since, until, "gender")
+        gender_labels = []
+        gender_values = []
+        gender_colors = {"male": "#4A90D9", "female": "#E36100", "unknown": "#9B9B9B"}
+        for g in gender_data:
+            lbl = g.get("gender", "unknown").capitalize()
+            gender_labels.append(lbl)
+            gender_values.append(safe_float(g.get("spend")))
+
+        # Placement breakdown
+        placement_data = fetch_breakdown(since, until, "publisher_platform")
+        placement_labels = []
+        placement_values = []
+        placement_colors_map = {
+            "facebook": "#1877F2", "instagram": "#E4405F",
+            "messenger": "#00B2FF", "whatsapp": "#25D366",
+            "audience_network": "#F7941E"
+        }
+        for p in placement_data:
+            lbl = p.get("publisher_platform", "unknown").replace("_", " ").title()
+            placement_labels.append(lbl)
+            placement_values.append(safe_float(p.get("spend")))
+
+        return render_template("dashboard-novo.html",
+            cards=cards,
+            daily_labels=json.dumps(daily_labels),
+            daily_spend=json.dumps(daily_spend),
+            daily_imps=json.dumps(daily_imps),
+            camp_table=camp_table,
+            gender_labels=json.dumps(gender_labels),
+            gender_values=json.dumps(gender_values),
+            gender_colors=json.dumps(gender_colors),
+            placement_labels=json.dumps(placement_labels),
+            placement_values=json.dumps(placement_values),
+            placement_colors=json.dumps(placement_colors_map),
+            updated_at=datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
+            since=since,
+            until=until,
+            active_period=active_period,
+            since_str=since.isoformat(),
+            until_str=until.isoformat()
+        )
+    except Exception as e:
+        print(f"ERRO no dashboard/novo: {e}", flush=True)
         import traceback
         traceback.print_exc()
         return f"<h2>Erro ao carregar dashboard</h2><pre>{e}</pre>", 500
