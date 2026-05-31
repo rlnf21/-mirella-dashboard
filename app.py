@@ -45,6 +45,15 @@ def load_token():
             pass
     return None
 
+def save_token(token, expires_in=5184000):
+    data = {
+        "token": token,
+        "expires_at": time.time() + expires_in,
+        "generated_at": time.strftime("%Y-%m-%d %H:%M:%S")
+    }
+    with open(TOKEN_PATH, "w") as f:
+        json.dump(data, f, indent=2)
+
 def get_token():
     token = load_token()
     if token:
