@@ -112,7 +112,7 @@ text-transform: uppercase; letter-spacing: 0.5px;
 .period-btn {
 padding: 7px 16px; border-radius: 8px; border: 1px solid var(--border-color);
 background: var(--bg-card); color: var(--text-main); font-size: 13px;
-font-weight: 600; cursor: pointer; font-family: Inter; transition: all 0.2s;
+font-weight: 600; cursor: pointer; font-family: Inter; text-decoration: none; transition: all 0.2s;
 }
 .period-btn:hover { border-color: var(--mi-orange); color: var(--mi-orange); }
 .period-btn.active { background: var(--mi-orange); color: #fff; border-color: var(--mi-orange); }
@@ -260,10 +260,10 @@ overflow: hidden;
 
 <div class="period-bar">
 <span class="period-label"><i class="fas fa-calendar-alt"></i> Período:</span>
-<button class="period-btn {{ 'active' if active_period == '7' }}" onclick="goPeriod(7)">7d</button>
-<button class="period-btn {{ 'active' if active_period == '30' }}" onclick="goPeriod(30)">30d</button>
-<button class="period-btn {{ 'active' if active_period == '90' }}" onclick="goPeriod(90)">90d</button>
-<button class="period-btn {{ 'active' if active_period == 'custom' }}" onclick="document.getElementById('datepicker').click()">&#128197; Custom</button>
+<a href="/dashboard?days=7" class="period-btn {{ 'active' if active_period == '7' }}">7d</a>
+<a href="/dashboard?days=30" class="period-btn {{ 'active' if active_period == '30' }}">30d</a>
+<a href="/dashboard?days=90" class="period-btn {{ 'active' if active_period == '90' }}">90d</a>
+<a href="#" class="period-btn {{ 'active' if active_period == 'custom' }}" onclick="event.preventDefault();document.getElementById('datepicker').click()">&#128197; Custom</a>
 <input type="text" id="datepicker" style="display:none" placeholder="Selecionar datas">
 <button class="refresh-btn" onclick="refreshData(this)"><i class="fas fa-sync-alt"></i> Atualizar</button>
 </div>
@@ -441,61 +441,6 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
 const isDark = html.getAttribute('data-theme') === 'dark';
 html.setAttribute('data-theme', isDark ? 'light' : 'dark');
 document.getElementById('theme-toggle').innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
-});
-
-// Period navigation
-function goPeriod(days) {
-document.getElementById('loading-overlay').classList.add('show');
-window.location.href = '/dashboard?days=' + days;
-}
-
-// Date picker (custom period)
-const picker = flatpickr('#datepicker', {
-mode: 'range',
-dateFormat: 'Y-m-d',
-locale: 'pt',
-maxDate: 'today',
-defaultDate: ['{{ since_str }}', '{{ until_str }}'],
-onClose: function(selectedDates) {
-if (selectedDates.length === 2) {
-document.getElementById('loading-overlay').classList.add('show');
-const since = selectedDates[0].toISOString().split('T')[0];
-const until = selectedDates[1].toISOString().split('T')[0];
-window.location.href = '/dashboard?since=' + since + '&until=' + until;
-}
-}
-});
-
-// Hide overlay when page loads
-window.addEventListener('load', function() {
-document.getElementById('loading-overlay').classList.remove('show');
-});
-
-// Table sorting
-document.querySelectorAll('#camp-table th').forEach(th => {
-th.addEventListener('click', function() {
-const tbody = document.getElementById('camp-tbody');
-const rows = Array.from(tbody.querySelectorAll('tr'));
-const col = this.dataset.col;
-const idx = Array.from(this.parentElement.children).indexOf(this);
-const isNum = this.classList.contains('num');
-const asc = this.dataset.asc !== 'true';
-rows.sort((a, b) => {
-const va = a.children[idx]?.textContent.trim() || '';
-const vb = b.children[idx]?.textContent.trim() || '';
-if (isNum) {
-const na = parseFloat(va.replace(/[^0-9,.-]/g, '').replace(',', '.')) || 0;
-const nb = parseFloat(vb.replace(/[^0-9,.-]/g, '').replace(',', '.')) || 0;
-return asc ? na - nb : nb - na;
-}
-return asc ? va.localeCompare(vb) : vb.localeCompare(va);
-});
-rows.forEach(r => tbody.appendChild(r));
-this.dataset.asc = asc;
-document.querySelectorAll('#camp-table th').forEach(h => {
-if (h !== this) h.dataset.asc = '';
-});
-});
 });
 
 // Refresh (preserva período atual)
