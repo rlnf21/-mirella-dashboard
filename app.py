@@ -310,8 +310,8 @@ def build_cards(cur, prev):
          "delta": fmt_delta(pct(c_cpc, p_cpc), reverse=True)},
         {"icon": "fa-percent", "label": "CTR", "value": fmt_ctr(c_ctr),
          "delta": fmt_delta(pct(c_ctr, p_ctr))},
-        {"icon": "fa-eye", "label": "CPM", "value": fmt_cpc(c_cpm),
-         "delta": fmt_delta(pct(c_cpm, p_cpm), reverse=True)},
+        {"icon": "fa-tag", "label": "CPL", "value": fmt_cpc(c_cpl) if c_cpl else "—",
+         "delta": fmt_delta(pct(c_cpl, p_cpl), reverse=True) if c_cpl and p_cpl else fmt_delta(None)},
     ]
 
 def build_camp_table(camp_rows, since, until):
