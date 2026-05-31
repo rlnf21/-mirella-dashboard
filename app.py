@@ -112,6 +112,8 @@ def parse_actions(insight):
     return leads, cpl
 
 # ===== FETCH =====
+
+def get_static_data():
     now = time.time()
     if static_cache["campaigns"] and now < static_cache["expires_at"]:
         return static_cache["campaigns"], static_cache["ads"]
