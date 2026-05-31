@@ -130,12 +130,12 @@ def get_static_data():
     static_cache["expires_at"] = now + 600  # 10 min
     return campaigns, ads
 
-def fetch_breakdown(since_date, until_date, breakdown):
+def fetch_breakdown(since_date, until_date, breakdown, limit=25):
     data = fetch_all(f"{AD_ACCOUNT}/insights", {
         "time_range": json.dumps({"since": since_date.isoformat(), "until": until_date.isoformat()}),
         "breakdowns": breakdown,
         "fields": "spend,impressions,clicks,cpc,ctr",
-        "limit": 20
+        "limit": limit
     })
     return data
 
@@ -298,6 +298,8 @@ def build_cards(cur, prev):
     p_cpm = safe_float(prev.get("cpm"))
     p_reach = safe_int(prev.get("reach"))
     p_leads, p_cpl = parse_actions(prev)
+    c_cvr = (c_leads / c_clicks * 100) if c_clicks and c_leads else None
+    p_cvr = (p_leads / p_clicks * 100) if p_clicks and p_leads else None
 
     return [
         {"icon": "fa-coins", "label": "Gasto", "value": fmt_money(c_spend),
@@ -312,6 +314,8 @@ def build_cards(cur, prev):
          "delta": fmt_delta(pct(c_ctr, p_ctr))},
         {"icon": "fa-tag", "label": "CPL", "value": fmt_cpc(c_cpl) if c_cpl else "—",
          "delta": fmt_delta(pct(c_cpl, p_cpl), reverse=True) if c_cpl and p_cpl else fmt_delta(None)},
+        {"icon": "fa-chart-line", "label": "CVR", "value": fmt_ctr(c_cvr) if c_cvr else "—",
+         "delta": fmt_delta(pct(c_cvr, p_cvr)) if c_cvr and p_cvr else fmt_delta(None)},
     ]
 
 def build_camp_table(camp_rows, since, until):
@@ -435,6 +439,20 @@ def dashboard_novo():
         placement_values = [placement_map[k] for k in ["feed", "stories", "reels"] if placement_map[k] > 0]
         active_positions = [k for k in ["feed", "stories", "reels"] if placement_map[k] > 0]
 
+        # Age + Gender breakdown
+        age_gender_data = fetch_breakdown(since, until, "age,gender", limit=50)
+        age_order = ["13-17", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"]
+        age_map = {}
+        for row in age_gender_data:
+            age = row.get("age", "")
+            gender = row.get("gender", "unknown")
+            if age not in age_map:
+                age_map[age] = {}
+            age_map[age][gender] = safe_float(row.get("spend"))
+        age_labels = [a for a in age_order if a in age_map]
+        age_female = [age_map[a].get("female", 0) for a in age_labels]
+        age_male = [age_map[a].get("male", 0) for a in age_labels]
+
         return render_template("dashboard-novo.html",
             cards=cards,
             daily_labels=json.dumps(daily_labels),
@@ -448,6 +466,9 @@ def dashboard_novo():
             placement_labels=json.dumps(placement_labels),
             placement_values=json.dumps(placement_values),
             placement_colors=json.dumps(pos_colors),
+            age_labels=json.dumps(age_labels),
+            age_female=json.dumps(age_female),
+            age_male=json.dumps(age_male),
             updated_at=datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
             since=since,
             until=until,

@@ -261,6 +261,12 @@ tr:hover td { background: var(--mi-orange-light); }
 </div>
 </div>
 <div class="chart-card chart-half">
+<h3><i class="fas fa-calendar-alt"></i> Idade</h3>
+<div class="chart-wrapper">
+<canvas id="ageChart"></canvas>
+</div>
+</div>
+<div class="chart-card chart-half">
 <h3><i class="fas fa-map-pin"></i> Posicionamento</h3>
 <div class="chart-wrapper">
 <canvas id="placementChart"></canvas>
@@ -308,6 +314,9 @@ const genderColors = {{ gender_colors | safe }};
 const placementLabels = {{ placement_labels | safe }};
 const placementValues = {{ placement_values | safe }};
 const placementColors = {{ placement_colors | safe }};
+const ageLabels = {{ age_labels | safe }};
+const ageFemale = {{ age_female | safe }};
+const ageMale = {{ age_male | safe }};
 
 const dailyCtx = document.getElementById('dailyChart').getContext('2d');
 new Chart(dailyCtx, {
@@ -491,6 +500,63 @@ ticks: { font: { size: 12, family: 'Inter', weight: '600' } }
 }
 }
 }
+});
+
+// Age stacked bar chart
+const ageCtx = document.getElementById('ageChart').getContext('2d');
+new Chart(ageCtx, {
+  type: 'bar',
+  data: {
+    labels: ageLabels,
+    datasets: [
+      {
+        label: 'Feminino',
+        data: ageFemale,
+        backgroundColor: '#E36100',
+        borderRadius: 2,
+        borderWidth: 0
+      },
+      {
+        label: 'Masculino',
+        data: ageMale,
+        backgroundColor: '#4A90D9',
+        borderRadius: 2,
+        borderWidth: 0
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        stacked: true,
+        grid: { display: false },
+        ticks: { font: { size: 11, family: 'Inter' } }
+      },
+      y: {
+        stacked: true,
+        grid: { color: 'var(--border-color)' },
+        ticks: {
+          font: { size: 11, family: 'Inter' },
+          callback: function(v) { return 'R$' + v.toFixed(0); }
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: { usePointStyle: true, padding: 16, font: { family: 'Inter', size: 11 } }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            return ctx.dataset.label + ': R$ ' + ctx.parsed.y.toFixed(2).replace('.', ',');
+          }
+        }
+      }
+    }
+  }
 });
 
 // Theme
