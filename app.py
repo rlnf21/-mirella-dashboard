@@ -287,6 +287,9 @@ def dashboard():
             start_90=d["start_90"]
         )
     except Exception as e:
+        print(f"ERRO no dashboard: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         return f"<h2>Erro ao carregar dashboard</h2><pre>{e}</pre>", 500
 
 @app.route("/api/refresh")
@@ -294,6 +297,23 @@ def api_refresh():
     cache["data"] = None
     cache["expires_at"] = 0
     return jsonify({"status": "ok", "message": "Cache limpo. Próximo acesso buscará dados novos."})
+
+@app.route("/api/health")
+def api_health():
+    result = {"status": "checking", "token_exists": False, "token_works": False, "error": None}
+    try:
+        token = get_token()
+        result["token_exists"] = True
+        r = requests.get(f"{BASE_URL}/me", headers={"Authorization": f"Bearer {token}"})
+        me = r.json()
+        if "id" in me:
+            result["token_works"] = True
+            result["user"] = me.get("name", "unknown")
+        else:
+            result["error"] = me.get("error", {}).get("message", "Token inválido")
+    except Exception as e:
+        result["error"] = str(e)
+    return jsonify(result)
 
 @app.route("/")
 def index():
