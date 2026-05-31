@@ -237,7 +237,7 @@ tr:hover td { background: var(--mi-orange-light); }
 <div class="content">
 <div class="cards-grid">
 {% for card in cards %}
-<div class="card-stat">
+<div class="card-stat" title="{{ card.tooltip }}">
 <div class="icon"><i class="fas {{ card.icon }}"></i></div>
 <div class="label">{{ card.label }}</div>
 <div class="value">{{ card.value }}</div>

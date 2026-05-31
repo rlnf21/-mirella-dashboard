@@ -303,19 +303,21 @@ def build_cards(cur, prev):
 
     return [
         {"icon": "fa-coins", "label": "Gasto", "value": fmt_money(c_spend),
-         "delta": fmt_delta(pct(c_spend, p_spend))},
+         "delta": fmt_delta(pct(c_spend, p_spend)), "tooltip": "Total investido em anúncios no período"},
         {"icon": "fa-users", "label": "Leads", "value": str(c_leads),
-         "delta": fmt_delta(pct(c_leads, p_leads))},
+         "delta": fmt_delta(pct(c_leads, p_leads)), "tooltip": "Total de leads gerados"},
         {"icon": "fa-eye", "label": "Alcance", "value": f"{c_reach:,}".replace(",", "."),
-         "delta": fmt_delta(pct(c_reach, p_reach))},
+         "delta": fmt_delta(pct(c_reach, p_reach)), "tooltip": "Pessoas alcançadas"},
         {"icon": "fa-mouse-pointer", "label": "CPC", "value": fmt_cpc(c_cpc),
-         "delta": fmt_delta(pct(c_cpc, p_cpc), reverse=True)},
+         "delta": fmt_delta(pct(c_cpc, p_cpc), reverse=True), "tooltip": "Custo por clique"},
         {"icon": "fa-percent", "label": "CTR", "value": fmt_ctr(c_ctr),
-         "delta": fmt_delta(pct(c_ctr, p_ctr))},
+         "delta": fmt_delta(pct(c_ctr, p_ctr)), "tooltip": "Taxa de cliques (cliques ÷ impressões)"},
         {"icon": "fa-tag", "label": "CPL", "value": fmt_cpc(c_cpl) if c_cpl else "—",
-         "delta": fmt_delta(pct(c_cpl, p_cpl), reverse=True) if c_cpl and p_cpl else fmt_delta(None)},
+         "delta": fmt_delta(pct(c_cpl, p_cpl), reverse=True) if c_cpl and p_cpl else fmt_delta(None),
+         "tooltip": "Custo por lead (gasto ÷ leads)"},
         {"icon": "fa-chart-line", "label": "CVR", "value": fmt_ctr(c_cvr) if c_cvr else "—",
-         "delta": fmt_delta(pct(c_cvr, p_cvr)) if c_cvr and p_cvr else fmt_delta(None)},
+         "delta": fmt_delta(pct(c_cvr, p_cvr)) if c_cvr and p_cvr else fmt_delta(None),
+         "tooltip": "Taxa de conversão (leads ÷ cliques)"},
     ]
 
 def build_camp_table(camp_rows, since, until):
