@@ -421,18 +421,18 @@ def dashboard_novo():
             gender_values.append(safe_float(g.get("spend")))
 
         # Placement breakdown
-        placement_data = fetch_breakdown(since, until, "publisher_platform")
-        placement_labels = []
-        placement_values = []
-        placement_colors_map = {
-            "facebook": "#1877F2", "instagram": "#E4405F",
-            "messenger": "#00B2FF", "whatsapp": "#25D366",
-            "audience_network": "#F7941E"
-        }
+        # Placement breakdown (stories, reels, feed)
+        placement_data = fetch_breakdown(since, until, "publisher_platform,platform_position")
+        placement_map = {"feed": 0, "stories": 0, "reels": 0}
+        pos_labels = {"feed": "Feed", "stories": "Stories", "reels": "Reels"}
+        pos_colors = {"feed": "#1877F2", "stories": "#E4405F", "reels": "#25D366"}
         for p in placement_data:
-            lbl = p.get("publisher_platform", "unknown").replace("_", " ").title()
-            placement_labels.append(lbl)
-            placement_values.append(safe_float(p.get("spend")))
+            pos = p.get("platform_position", "").replace("instagram_", "").replace("facebook_", "")
+            if pos in placement_map:
+                placement_map[pos] += safe_float(p.get("spend"))
+        placement_labels = [pos_labels[k] for k in ["feed", "stories", "reels"] if placement_map[k] > 0]
+        placement_values = [placement_map[k] for k in ["feed", "stories", "reels"] if placement_map[k] > 0]
+        active_positions = [k for k in ["feed", "stories", "reels"] if placement_map[k] > 0]
 
         return render_template("dashboard-novo.html",
             cards=cards,
@@ -445,7 +445,7 @@ def dashboard_novo():
             gender_colors=json.dumps(gender_colors),
             placement_labels=json.dumps(placement_labels),
             placement_values=json.dumps(placement_values),
-            placement_colors=json.dumps(placement_colors_map),
+            placement_colors=json.dumps(pos_colors),
             updated_at=datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
             since=since,
             until=until,
