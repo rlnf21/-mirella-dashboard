@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal do Cliente — Mirella Imóveis | Hub de Entregas</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Marked.js para renderização de Markdown no cliente (file:// friendly) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <style>
+        :root {
+            /* Cores Mirella Imóveis */
+            --mi-orange: #E36100;
+            --mi-orange-hover: #ff7d26;
+            --mi-orange-light: rgba(227, 97, 0, 0.1);
+            --mi-beige: #FDF0E9;
+            --brand-accent: #864df9;
+            --brand-accent-hover: #9c6eff;
+            --brand-accent-light: rgba(134, 77, 249, 0.1);
+            
+            /* Light Theme Defaults */
+            --bg-page: #f7f5f2;
+            --bg-sidebar: rgba(255, 255, 255, 0.85);
+            --bg-card: #ffffff;
+            --bg-code: #f1f3f5;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --border-color: rgba(227, 97, 0, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.03);
+            --shadow-md: 0 10px 30px rgba(227, 97, 0, 0.06);
+            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.05);
+            --tag-bg: #edf2f7;
+            --scrollbar-bg: #e2e8f0;
+            --scrollbar-thumb: #cbd5e0;
+        }
+
+        [data-theme="dark"] {
+            --bg-page: #0b0e17;
+            --bg-sidebar: rgba(17, 22, 37, 0.9);
+            --bg-card: #151a2d;
+            --bg-code: #1e253f;
+            --text-main: #e2e8f0;
+            --text-muted: #a0aec0;
+            --border-color: rgba(255, 255, 255, 0.07);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 15px 35px rgba(0, 0, 0, 0.4);
+            --tag-bg: #1e253f;
+            --scrollbar-bg: #151a2d;
+            --scrollbar-thumb: #2d3748;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            overflow-x: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* --- ORBES DE FUNDO DECORATIVOS --- */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.12;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .orb-1 { width: 600px; height: 600px; background: var(--mi-orange); top: -200px; right: -100px; }
+        .orb-2 { width: 500px; height: 500px; background: var(--brand-accent); bottom: -100px; left: -100px; }
+
+        /* --- SCROLLBAR --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--mi-orange);
+        }
+
+        /* --- SIDEBAR --- */
+        aside {
+            width: 280px;
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-color);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 35px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .brand img {
+            max-height: 45px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.05));
+        }
+
+        .brand-subtitle {
+            font-family: 'Poppins', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--mi-orange);
+            text-transform: uppercase;
+        }
+
+        .menu-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin: 20px 0 10px 10px;
+        }
+
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 5px;
+        }
+
+        .menu-item {
+            width: 100%;
+        }
+
+        .menu-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            gap: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .menu-btn i {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+            color: var(--text-muted);
+            transition: color 0.2s ease;
+        }
+
+        .menu-btn:hover {
+            background: var(--mi-orange-light);
+            color: var(--mi-orange);
+        }
+
+        .menu-btn:hover i {
+            color: var(--mi-orange);
+        }
+
+        .menu-item.active .menu-btn {
+            background: var(--mi-orange);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(227, 97, 0, 0.2);
+        }
+
+        .menu-item.active .menu-btn i {
+            color: #ffffff;
+        }
+
+        .theme-switch-container {
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .theme-switch-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .theme-switch-btn {
+            background: var(--tag-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .theme-switch-btn:hover {
+            background: var(--mi-orange);
+            color: white;
+            transform: rotate(15deg);
+        }
+
+        /* --- MAIN CONTENT AREA --- */
+        main {
+            flex-grow: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- TOP BAR --- */
+        header.topbar {
+            height: 70px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(var(--bg-card), 0.7);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            flex-shrink: 0;
+            z-index: 90;
+        }
+
+        .doc-title-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .doc-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--mi-orange-light);
+            color: var(--mi-orange);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .doc-title-wrapper h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .doc-title-wrapper p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .actions-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-action {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .btn-action:hover {
+            border-color: var(--mi-orange);
+            color: var(--mi-orange);
+            transform: translateY(-1px);
+        }
+
+        .btn-action.primary {
+            background: var(--mi-orange);
+            border-color: var(--mi-orange);
+            color: white;
+        }
+
+        .btn-action.primary:hover {
+            background: var(--mi-orange-hover);
+            border-color: var(--mi-orange-hover);
+            color: white;
+            box-shadow: 0 4px 12px rgba(227, 97, 0, 0.2);
+        }
+
+        /* --- CONTENT BODY --- */
+        .content-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 40px;
+            position: relative;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- DASHBOARD VIEW --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card-stat {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-stat::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 4px;
+            width: 100%;
+            background: linear-gradient(90deg, var(--mi-orange), var(--brand-accent));
+        }
+
+        .stat-details h3 {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .stat-details p {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: var(--mi-orange-light);
+            color: var(--mi-orange);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .card-stat:nth-child(even) .stat-icon {
+            background: var(--brand-accent-light);
+            color: var(--brand-accent);
+        }
+
+        /* --- PROJECT TIMELINE --- */
+        .timeline-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 40px;
+        }
+
+        .timeline-card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 9px;
+            height: calc(100% - 10px);
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+        }
+
+        .timeline-badge {
+            position: absolute;
+            left: -30px;
+            top: 3px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 4px solid var(--text-muted);
+            z-index: 10;
+        }
+
+        .timeline-item.completed .timeline-badge {
+            border-color: #22c55e;
+            background: #22c55e;
+        }
+
+        .timeline-item.active .timeline-badge {
+            border-color: var(--mi-orange);
+            background: var(--bg-page);
+            animation: pulse-badge 2s infinite;
+        }
+
+        @keyframes pulse-badge {
+            0% { box-shadow: 0 0 0 0 rgba(227, 97, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(227, 97, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(227, 97, 0, 0); }
+        }
+
+        .timeline-info {
+            background: var(--bg-page);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .timeline-info h4 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .timeline-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .timeline-status {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-done { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+        .status-now { background: rgba(227, 97, 0, 0.1); color: var(--mi-orange); }
+        .status-next { background: var(--tag-bg); color: var(--text-muted); }
+
+        /* --- MARKDOWN BODY STYLING --- */
+        .markdown-wrapper {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .markdown-body {
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-main);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .markdown-body h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .markdown-body h2 {
+            font-size: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .markdown-body h3 {
+            font-size: 16px;
+        }
+
+        .markdown-body p {
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .markdown-body ul, .markdown-body ol {
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+
+        .markdown-body li {
+            margin-bottom: 8px;
+        }
+
+        .markdown-body blockquote {
+            padding: 15px 20px;
+            background: var(--bg-page);
+            border-left: 4px solid var(--mi-orange);
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .markdown-body blockquote p {
+            margin-bottom: 0;
+            color: var(--text-muted);
+        }
+
+        .markdown-body code {
+            font-family: 'Courier New', Courier, monospace;
+            background: var(--bg-code);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--mi-orange);
+            font-weight: 600;
+        }
+
+        .markdown-body pre {
+            background: var(--bg-code);
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .markdown-body pre code {
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+            color: var(--text-main);
+            font-weight: 400;
+        }
+
+        .markdown-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .markdown-body th, .markdown-body td {
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .markdown-body th {
+            background: var(--bg-page);
+            font-weight: 600;
+            color: var(--mi-orange);
+            text-align: left;
+        }
+
+        .markdown-body tr:nth-child(even) {
+            background: rgba(var(--tag-bg), 0.2);
+        }
+
+        .markdown-body hr {
+            height: 1px;
+            border: none;
+            background: var(--border-color);
+            margin: 30px 0;
+        }
+
+        /* --- PREVIEW TABS (PÁGINAS) --- */
+        .preview-subtabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .subtab-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .subtab-btn:hover {
+            color: var(--mi-orange);
+            border-color: var(--mi-orange);
+        }
+
+        .subtab-btn.active {
+            background: var(--mi-orange);
+            color: white;
+            border-color: var(--mi-orange);
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: calc(100vh - 250px);
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .iframe-fallback {
+            padding: 40px;
+            text-align: center;
+        }
+
+        /* --- TOAST FLOATING --- */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--mi-orange);
+            border-radius: 12px;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast i {
+            color: #22c55e;
+            font-size: 20px;
+        }
+
+        .toast-content h5 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .toast-content p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* --- RESPONSIVIDADE --- */
+        @media (max-width: 1024px) {
+            aside {
+                width: 70px;
+                padding: 20px 10px;
+            }
+            .brand-subtitle, .menu-title, .menu-btn span, .theme-switch-label {
+                display: none;
+            }
+            .brand {
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+            }
+            .brand img {
+                max-height: 25px;
+            }
+            .menu-btn {
+                padding: 12px;
+                justify-content: center;
+            }
+            .theme-switch-container {
+                justify-content: center;
+            }
+            header.topbar {
+                padding: 0 20px;
+            }
+            .content-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- SIDEBAR -->
+    <aside>
+        <div class="brand">
+            <img src="https://mirellaimoveis.com/wp-content/uploads/2025/09/Camada-0.png" alt="Mirella Imóveis">
+            <span class="brand-subtitle">Hub do Cliente</span>
+        </div>
+
+        <nav class="menu-list">
+            <div class="menu-title">Geral</div>
+            <li class="menu-item active" data-tab="dashboard">
+                <button class="menu-btn">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </button>
+            </li>
+
+            <div class="menu-title">Planejamento</div>
+            <li class="menu-item" data-tab="brandformance">
+                <button class="menu-btn">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Brandformance</span>
+                </button>
+            </li>
+            <li class="menu-item" data-tab="icp">
+                <button class="menu-btn">
+                    <i class="fas fa-users"></i>
+                    <span>ICP Persona</span>
+                </button>
+            </li>
+            <li class="menu-item" data-tab="offer">
+                <button class="menu-btn">
+                    <i class="fas fa-comment-dollar"></i>
+                    <span>Diagnóstico Oferta</span>
+                </button>
+            </li>
+
+            <div class="menu-title">Campanhas (Meta)</div>
+            <li class="menu-item" data-tab="concepts">
+                <button class="menu-btn">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Conceitos Criativos</span>
+                </button>
+            </li>
+            <li class="menu-item" data-tab="image-prompts">
+                <button class="menu-btn">
+                    <i class="fas fa-image"></i>
+                    <span>Prompts Imagens</span>
+                </button>
+            </li>
+            <li class="menu-item" data-tab="ads-results">
+                <button class="menu-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Resultados ADS</span>
+                </button>
+            </li>
+
+            <div class="menu-title">Social Media</div>
+            <li class="menu-item" data-tab="social-plan">
+                <button class="menu-btn">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Planejamento Posts</span>
+                </button>
+            </li>
+            <li class="menu-item" data-tab="social-copy">
+                <button class="menu-btn">
+                    <i class="fas fa-feather-alt"></i>
+                    <span>Legendas Semana 1</span>
+                </button>
+            </li>
+            <li class="menu-item" data-tab="social-prompts">
+                <button class="menu-btn">
+                    <i class="fas fa-magic"></i>
+                    <span>Prompts Posts</span>
+                </button>
+            </li>
+
+            <div class="menu-title">Páginas & Wireframe</div>
+            <li class="menu-item" data-tab="wireframe-doc">
+                <button class="menu-btn">
+                    <i class="fas fa-table"></i>
+                    <span>Estrutura Wireframe</span>
+                </button>
+            </li>
+            <li class="menu-item" data-tab="prototypes">
+                <button class="menu-btn">
+                    <i class="fas fa-laptop-code"></i>
+                    <span>Visualizar Páginas</span>
+                </button>
+            </li>
+        </nav>
+
+        <div class="theme-switch-container">
+            <span class="theme-switch-label">Tema Escuro</span>
+            <button class="theme-switch-btn" id="theme-toggle" aria-label="Alternar Tema">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main>
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="doc-title-container">
+                <div class="doc-icon" id="header-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="doc-title-wrapper">
+                    <h2 id="header-title">Geral</h2>
+                    <p id="header-subtitle">Visão geral do projeto e progresso da Mirella Imóveis</p>
+                </div>
+            </div>
+
+            <div class="actions-wrapper">
+                <button class="btn-action" id="btn-copy" style="display:none;">
+                    <i class="fas fa-copy"></i> Copiar Conteúdo
+                </button>
+                <button class="btn-action primary" id="btn-open-external" style="display:none;">
+                    <i class="fas fa-external-link-alt"></i> Abrir em Nova Aba
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT BODY -->
+        <div class="content-body">
+            
+            <!-- DASHBOARD TAB -->
+            <section class="tab-content active" id="tab-dashboard">
+                <div class="dashboard-grid">
+                    <div class="card-stat">
+                        <div class="stat-details">
+                            <h3>Famílias Realizadas</h3>
+                            <p>1.000+</p>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-users-viewfinder"></i>
+                        </div>
+                    </div>
+                    <div class="card-stat">
+                        <div class="stat-details">
+                            <h3>Maturidade Digital</h3>
+                            <p>45 / 100</p>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="card-stat">
+                        <div class="stat-details">
+                            <h3>Budget Anúncios</h3>
+                            <p>R$ 2.000,00</p>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                    </div>
+                    <div class="card-stat">
+                        <div class="stat-details">
+                            <h3>Entregáveis Hub</h3>
+                            <p>11 Arquivos</p>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-folder-open"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-card">
+                    <h3><i class="fas fa-tasks text-orange"></i> Progresso das Entregas</h3>
+                    <div class="timeline">
+                        <div class="timeline-item completed">
+                            <div class="timeline-badge"></div>
+                            <div class="timeline-info">
+                                <h4>
+                                    <span>Diagnóstico & Modelagem de Oferta</span>
+                                    <span class="timeline-status status-done">Concluído</span>
+                                </h4>
+                                <p>Estruturação da Proposta de Valor e mapa mental do cliente no segmento Minha Casa Minha Vida.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-badge"></div>
+                            <div class="timeline-info">
+                                <h4>
+                                    <span>Brandformance Plan (Plano de Mídia)</span>
+                                    <span class="timeline-status status-done">Concluído</span>
+                                </h4>
+                                <p>Divisão estratégica de budget de tráfego entre Meta Ads (80%) e YouTube Ads (20%) com funil de micro-bolhas.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-badge"></div>
+                            <div class="timeline-info">
+                                <h4>
+                                    <span>Conceitos de Criativos & Legendas</span>
+                                    <span class="timeline-status status-done">Concluído</span>
+                                </h4>
+                                <p>Modelagem de 3 conceitos de performance completos, legendas e prompts de imagem geradores de criativos.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-badge"></div>
+                            <div class="timeline-info">
+                                <h4>
+                                    <span>Calendário Editorial & Posts Semana 01</span>
+                                    <span class="timeline-status status-done">Concluído</span>
+                                </h4>
+                                <p>Planejamento de conteúdo do Instagram de 30 dias com legendas e prompts de imagens para posts da Semana 01.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item completed">
+                            <div class="timeline-badge"></div>
+                            <div class="timeline-info">
+                                <h4>
+                                    <span>Protótipo da Landing Page Premium & Wireframe</span>
+                                    <span class="timeline-status status-done">Concluído</span>
+                                </h4>
+                                <p>Páginas prontas em HTML e validadas sob o framework PASTOR focadas em simulação gratuita de crédito.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item active">
+                            <div class="timeline-badge"></div>
+                            <div class="timeline-info">
+                                <h4>
+                                    <span>Apresentação & Entrega ao Cliente</span>
+                                    <span class="timeline-status status-now">Próximo Passo</span>
+                                </h4>
+                                <p>Entrega deste portal unificado de controle para Mirella Imóveis contendo todos os dados operacionais.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MARKDOWN RENDER TABS -->
+            <section class="tab-content" id="tab-brandformance">
+                <div class="markdown-wrapper">
+                    <div class="markdown-body" id="md-brandformance"></div>
+                </div>
+            </section>
+
+            <section class="tab-content" id="tab-icp">
+                <div class="markdown-wrapper">
+                    <div class="markdown-body" id="md-icp"></div>
+                </div>
+            </section>
+
+            <section class="tab-content" id="tab-offer">
+                <div class="markdown-wrapper">
+                    <div class="markdown-body" id="md-offer"></div>
+                </div>
+            </section>
+
+            <section class="tab-content" id="tab-concepts">
+                <div class="markdown-wrapper">
+                    <div class="markdown-body" id="md-concepts"></div>
+                </div>
+            </section>
+
+            <section class="tab-content" id="tab-image-prompts">
+                <div class="markdown-wrapper">
+                    <div class="markdown-body" id="md-image-prompts"></div>
+                </div>
+            </section>
+
+            <section class="tab-content" id="tab-social-plan">
+                <div class="markdown-wrapper">
+                    <div class="markdown-body" id="md-social-plan"></div>
+                </div>
+            </section>
+
+            <section class="tab-content" id="tab-social-copy">
+                <div class="markdown-wrapper">
+                    <div class="markdown-body" id="md-social-copy"></div>
+                </div>
+            </section>
+
+            <section class="tab-content" id="tab-social-prompts">
+                <div class="markdown-wrapper">
+                    <div class="markdown-body" id="md-social-prompts"></div>
+                </div>
+            </section>
+
+            <section class="tab-content" id="tab-wireframe-doc">
+                <div class="markdown-wrapper">
+                    <div class="markdown-body" id="md-wireframe-doc"></div>
+                </div>
+            </section>
+
+            <!-- PROTOTYPES PREVIEW TAB (IFRAMES) -->
+            <section class="tab-content" id="tab-prototypes">
+                <div class="preview-subtabs">
+                    <button class="subtab-btn active" data-iframe="./lp-premium-mirella-imoveis.html">Landing Page Premium</button>
+                    <button class="subtab-btn" data-iframe="./wireframe-mirella-imoveis.html">Wireframe (Tabela)</button>
+                </div>
+                <div class="iframe-container">
+                    <iframe id="prototype-iframe" src="./lp-premium-mirella-imoveis.html"></iframe>
+                </div>
+            </section>
+
+            <!-- ADS DASHBOARD TAB -->
+            <section class="tab-content" id="tab-ads-results">
+                <div class="iframe-container" style="height: calc(100vh - 200px);">
+                    <!-- APÓS DEPLOY NO RENDER, troque a URL abaixo -->
+                    <iframe id="ads-iframe" src="http://localhost:5000/dashboard"></iframe>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast" id="copy-toast">
+        <i class="fas fa-circle-check"></i>
+        <div class="toast-content">
+            <h5>Copiado!</h5>
+            <p>O conteúdo foi copiado para a área de transferência.</p>
+        </div>
+    </div>
+
+    <!-- MARKDOWN CONTENTS IN SCRIPT TAGS (PREVENTS CORS) -->
+    <script type="text/markdown" id="content-brandformance">
+# Brandformance Plan — Mirella Imóveis
+
+## Resumo Executivo
+O plano foca na captura de demanda imediata (leads MCMV) via **Meta Ads** e na construção de autoridade didática via **YouTube**. Com um budget de R$ 2.000,00, a prioridade é a eficiência (baixo CPL) para permitir escala futura.
+
+---
+
+## 1. Diagnóstico de Maturidade
+*   **Score de Maturidade:** 45/100
+*   **Nível:** 2 — Expansão Controlada
+*   **Mix Recomendado:** 80% Ativação (Leads) / 20% Construção de Marca (Awareness/Educação).
+
+---
+
+## 2. Mix Recomendado (Budget: R$ 2.000,00)
+
+| Canal | Investimento | Objetivo | KPI Principal |
+|-------|--------------|----------|---------------|
+| **Meta Ads** | R$ 1.500,00 | Geração de Leads (SQL) | CPL (Custo por Lead) |
+| **YouTube Ads**| R$ 500,00 | Autoridade e Educação | CPV / Branded Search |
+
+### Estratégia de Micro-Bolhas (Split 70/30)
+Aplicaremos o conceito de micro-bolhas para cercar o ICP na região:
+*   **70% (Aquisição):** Tráfego para novos públicos (interesses em MCMV, Caixa, Imóveis).
+*   **30% (Remarketing):** Anúncios de prova social e "Como funciona" para quem já interagiu.
+
+---
+
+## 3. Cenários de Projeção (6 Meses)
+
+| Cenário | Budget | Foco | Resultado Esperado |
+|---------|:---:|---|---|
+| **Conservador** | R$ 2.000 | Manter CPL | 40-60 leads/mês |
+| **Moderado** | R$ 3.500 | Escalar volume | 80-120 leads/mês |
+| **Agressivo** | R$ 5.000 | Dominar região | 150+ leads/mês |
+
+---
+
+## 4. Implementação por Canal
+
+### Meta Ads (Facebook/Instagram)
+*   **Formatos:** Stories (UGC - vídeo de corretor), Reels (Tour pela casa), Feed (Tabela comparativa Aluguel vs. Parcela).
+*   **Ângulo:** "Saia do aluguel hoje com assessoria total".
+
+### YouTube Ads
+*   **Formatos:** In-stream curtos (15s) para awareness regional e In-feed (3-5 min) explicando "Como funciona o MCMV com a Mirella".
+*   **Ângulo:** "O guia definitivo para sua casa própria em [Cidade]".
+
+---
+
+## 5. Sinais de Marca para o Algoritmo
+O investimento de R$ 500 no YouTube não é "gasto", é sinal para o algoritmo:
+1.  **Aumento de Branded Search:** Mais pessoas buscando "Mirella Imóveis" no Google.
+2.  **Redução de CPC no Meta:** Audiência que já viu o YouTube clica mais barato no Instagram.
+3.  **Qualidade do Lead:** O lead que vem do YouTube costuma ser mais educado e "quente".
+
+---
+
+## 6. Próximos Passos (Janelas de Impacto)
+*   **30 Dias (Quick Wins):** Ajuste de LPs e início das campanhas de Meta foco em WhatsApp.
+*   **60-90 Dias (Maturação):** Início do YouTube e testes de criativos de prova social.
+*   **90+ Dias (Flywheel):** Otimização do CAC baseada no aumento das buscas orgânicas pela marca.
+
+---
+**Disclaimer:** Projeções são estimativas baseadas em benchmarks do setor imobiliário MCMV e precisam de calibração mensal.
+    </script>
+
+    <script type="text/markdown" id="content-icp">
+# ICP — Mirella Imóveis
+
+## 📊 9 Dimensões
+
+| Dimensão | Perfil MCMV (Minha Casa Minha Vida) |
+|----------|--------------------------------------|
+| **Faixa Etária** | 25 a 45 anos |
+| **Profissão** | Assalariados, funcionários públicos, autônomos formalizados (MEI) |
+| **Cargo (Decisor)** | Analistas, Comerciários, Professores, Enfermeiros, Supervisores |
+| **Setor** | Varejo, Serviços, Indústria, Saúde, Educação |
+| **Formação** | Ensino Médio completo, Ensino Técnico ou Superior |
+| **Objetivos** | Sair do aluguel, dar estabilidade para os filhos, construir patrimônio |
+| **Dores** | Insegurança do aluguel, falta de espaço, medo de burocracia bancária |
+| **Necessidades** | Subsídio governamental, assessoria para aprovação de crédito, parcelas que caibam no bolso |
+| **Tópicos de Interesse** | Financiamento habitacional, decoração econômica, arquitetura funcional, dicas de economia doméstica |
+
+---
+
+## 🧠 Perfil Psicográfico
+
+### Critérios de Decisão
+1. **Aprovação de Crédito:** O cliente decide por quem dá a certeza de que ele "consegue" comprar.
+2. **Confiança na Entrega:** Histórico de entregas (1.000 famílias) é o fiel da balança.
+3. **Valor da Parcela:** Comparação direta com o valor do aluguel atual.
+
+### Consciência do Problema
+*   **ICP Real (Problem Aware):** Já sabe que precisa sair do aluguel e está pesquisando opções MCMV. Busca por "Minha Casa Minha Vida [Cidade]".
+*   **ICP Aspiracional (Unaware):** Acha que nunca vai conseguir comprar uma casa. Precisa de ganchos que mostrem que "é possível para você também".
+
+### Objeções Comuns
+1. **"Não tenho dinheiro para a entrada":** Resolvida com o uso do FGTS e parcelamento da entrada.
+2. **"Sou mãe solteira, não aprovo":** Resolvida com cases de sucesso de perfis similares e soma de renda (se aplicável).
+3. **"Vou me endividar por 30 anos":** Respondida com o conceito de investimento em patrimônio próprio vs. "dinheiro jogado fora" no aluguel.
+
+### Canais de Aquisição
+1. **Meta Ads (70%):** Foco em Stories e Feed com ganchos emocionais e provas sociais.
+2. **YouTube (30%):** Vídeos de "tour" por casas entregues e explicações didáticas sobre financiamento (fundo de funil/consideração).
+
+---
+
+## 🎯 ICP Real vs. Aspiracional
+
+| Critério | ✅ ICP Real | ❌ ICP Aspiracional |
+|----------|------------|---------------------|
+| Renda | Renda familiar compatível com MCMV | Renda muito abaixo do mínimo ou sem comprovação |
+| Intenção | Pergunta sobre simulação e prazos | Pergunta apenas "qual o valor total" sem contexto |
+| Comportamento | Disposto a enviar documentos para análise | Tem medo de compartilhar dados básicos |
+| Ação Após Score | Enviar para agendamento de visita/simulação | Nutrir com conteúdos educativos sobre crédito |
+
+---
+
+## 💡 Modelos Mentais
+1. **Social Proof (Prova Social):** "Se 1.000 famílias conseguiram, eu também consigo".
+2. **Authority Bias (Viés de Autoridade):** A assessoria completa coloca a Mirella como autoridade técnica que "resolve o problema".
+3. **Loss Aversion (Aversão à Perda):** Mostrar quanto dinheiro o cliente "perde" por ano pagando aluguel em vez de investir na própria casa.
+4. **Anchoring (Ancoragem):** Ancorar o valor da parcela no valor do aluguel da região.
+
+---
+**Próximo Passo:** Gerar o Brandformance Plan (Plano de Mídia).
+    </script>
+
+    <script type="text/markdown" id="content-offer">
+# Offer Diagnosis — Mirella Imóveis
+
+## Resumo Executivo
+A Mirella Imóveis possui uma oferta extremamente sólida para o segmento **Minha Casa Minha Vida (MCMV)**. O diferencial de "assessoria ponta a ponta" (desde o terreno até a chave) ataca diretamente a maior dor do público: o medo da burocracia e da complexidade técnica. Com 1.000+ famílias atendidas, a prova social é o maior ativo de conversão.
+
+## Veredicto: ✅ **Oferta Pronta**
+Score: **138/150**
+
+---
+
+## Diagnóstico por Dimensão
+
+### 1. Clareza da Promessa — [5/5]
+A promessa de realizar o sonho da casa própria através do MCMV com acompanhamento completo é cristalina. O público entende imediatamente o que ganha: segurança e facilidade.
+
+### 2. Especificidade — [4/5]
+O ticket de R$ 170k e o volume de famílias atendidas trazem concretude. 
+*Recomendação:* Adicionar prazos médios de entrega para aumentar ainda mais a especificidade.
+
+### 3. Prova e Credibilidade — [5/5]
+1.000+ famílias atendidas em 5 anos é um benchmark fortíssimo para o mercado regional. Isso elimina a barreira da desconfiança inicial.
+
+### 4. Mecanismo Único — [5/5]
+A "Assessoria do Terreno à Chave" é o mecanismo único. Enquanto concorrentes vendem apenas o imóvel, a Mirella vende a **viabilização do projeto**, o que cria uma categoria própria na mente do prospect.
+
+### 5. Risco Percebido — [4/5]
+O risco de "não conseguir pagar" ou "não aprovar" é mitigado pela assessoria técnica que faz a análise de crédito prévia. O programa MCMV por si só já reduz o risco financeiro via subsídios.
+
+### 6. Objeções Mapeadas — [5/5]
+As objeções (burocracia, medo do financiamento, achar que não ganha o suficiente) estão perfeitamente identificadas e devem ser o centro do copy das LPs.
+
+### 7. Diferenciais Reais vs. Cosméticos — [5/5]
+O acompanhamento na escolha do terreno e na construção não é apenas um discurso; é um diferencial operacional que economiza dinheiro e tempo para o cliente.
+
+### 8. Ângulo Principal de Aquisição — [5/5]
+O ângulo de "Sair do Aluguel com assessoria total" é altamente relevante.
+*Sugestão de novo ângulo:* "Sua casa do seu jeito por valor de parcela de aluguel" (focando em terreno + construção).
+
+---
+
+## Mapa de Objeções
+| Objeção | Tipo | Resposta Estratégica |
+|---------|------|----------------------|
+| "Não consigo financiar" | Racional | Análise de crédito gratuita e imediata para mostrar o potencial real. |
+| "Burocracia de obra" | Emocional | Enfatizar o acompanhamento "ponta a ponta" — a Mirella faz tudo por você. |
+| "A parcela vai ser cara" | Racional | Comparativo real: Parcela MCMV vs. Valor Médio de Aluguel na região. |
+| "Medo da obra atrasar" | Emocional | Prova social: Mostrar fotos e depoimentos de casas entregues. |
+
+## Recomendações de Fortalecimento
+1. **Mês 1 (Quick Win):** Criar vídeos curtos de depoimentos de mães solteiras e casais jovens (os perfis do ICP) contando como foi fácil o processo.
+2. **Autoridade:** Destacar o número "1000 famílias" em todos os headers de LP e criativos de Ads.
+
+---
+**Próximo Passo:** Avançar para a definição do ICP Consolidado.
+    </script>
+
+    <script type="text/markdown" id="content-concepts">
+# Conceitos Criativos Meta Ads — Mirella Imóveis
+
+## Briefing Sintetizado
+- **Produto**: Imóveis Minha Casa Minha Vida (MCMV) com assessoria "Terreno à Chave".
+- **Público**: Casais jovens, famílias com filhos e mães solteiras.
+- **Dor principal**: Insegurança do aluguel e medo da burocracia bancária/obra.
+- **Diferencial**: 1.000+ famílias atendidas e assessoria técnica completa.
+- **Objetivo**: Geração de leads qualificados (SQL).
+- **Oferta**: Realizar o sonho da casa própria com parcelas similares ao aluguel.
+
+## Customer Avatar Hooks
+- **Why want**: Estabilidade familiar, sair do "dinheiro jogado fora" no aluguel, orgulho da conquista.
+- **Why NOT want**: Medo de ser negado pelo banco, medo de obra atrasar, medo de parcelas altas.
+- **Why watch**: Ver que "pessoas como eu" conseguiram, descobrir que a entrada pode ser parcelada.
+
+## Customer Journey Map
+- **Cold (TOF)**: Pain point & Solution, Old way vs New way, Industry stats.
+- **Warm (MOF)**: UGC - reviews, 5 reasons to buy, Product FAQs.
+- **Hot (BOF)**: Offer highlight, 5 star reviews, Direct Response.
+
+---
+
+## Conceito 1 — O Fim do Aluguel (TOF)
+
+### Estratégia
+```yaml
+conceito: "O Fim do Aluguel"
+creative_type: "Pain point & Solution"
+formato: "Feed 4:5"
+funnel_stage: "Cold (TOF)"
+hook_type: "Problem/Solution"
+emotion_triggers: ["alívio", "esperança"]
+copy_type: "Direct Response"
+```
+
+### Hook → Hold → Offer
+| Fase | Elemento | Detalhe |
+|------|----------|---------|
+| **HOOK** | Visual | Pessoa entregando chave pro proprietário (aluguel) vs. Recebendo chave da Mirella. |
+| **HOLD** | Texto | "Você sabia que a parcela da sua casa própria pode ser menor que o seu aluguel atual?" |
+| **OFFER** | CTA | "Faça sua simulação gratuita e saia do aluguel." |
+
+### Copy
+| Elemento | Conteúdo | Limite |
+|----------|----------|--------|
+| **Headline** | Chega de pagar aluguel! 🏠 | ≤40 chars |
+| **Texto-legenda** | Cansado de ver seu dinheiro sumir todo mês? 💸 <br><br>No Minha Casa Minha Vida com a Mirella Imóveis, você conquista sua casa própria com parcelas que cabem no seu bolso.<br><br>✅ Use seu FGTS<br>✅ Entrada facilitada<br>✅ Assessoria completa<br><br>↳ Clique abaixo e descubra se você tem crédito pré-aprovado! | 400-600 chars |
+| **Texto principal** | Cansado de ver seu dinheiro sumir todo mês? 💸 | ≤125 chars |
+| **Descrição** | Simulação Grátis em 2 Minutos | ≤30 chars |
+| **CTA** | Saiba mais | — |
+
+---
+
+## Conceito 2 — Terreno à Chave (MOF)
+
+### Estratégia
+```yaml
+conceito: "Ponta a Ponta"
+creative_type: "Us vs Them / Old way vs New way"
+formato: "Stories 9:16"
+funnel_stage: "Warm (MOF)"
+hook_type: "Us/Them"
+emotion_triggers: ["confiança", "segurança"]
+copy_type: "Value Proposition"
+```
+
+### Hook → Hold → Offer
+| Fase | Elemento | Detalhe |
+|------|----------|---------|
+| **HOOK** | Visual | Split screen: "Jeito Comum" (Pessoa perdida em papéis) vs. "Jeito Mirella" (Mirella resolvendo tudo). |
+| **HOLD** | Texto | "Nós cuidamos de tudo: da escolha do terreno até a entrega das chaves." |
+| **OFFER** | CTA | "Arraste para saber como funciona." |
+
+### Copy
+| Elemento | Conteúdo | Limite |
+|----------|----------|--------|
+| **Headline** | Do Terreno à Chave! 🔑 | ≤40 chars |
+| **Texto-legenda** | Construir ou comprar sua casa não precisa ser um pesadelo burocrático. 🤯 <br><br>Na Mirella Imóveis, você tem assessoria completa em todas as etapas:<br>① Escolha do terreno<br>② Aprovação de crédito<br>③ Projeto e Obra<br><br>São mais de 1.000 famílias que já realizaram o sonho com a gente. 🏆<br><br>→ Clique e agende uma consultoria sem compromisso! | 400-600 chars |
+| **Texto principal** | Construir ou comprar sua casa não precisa ser um pesadelo burocrático. 🤯 | ≤125 chars |
+| **Descrição** | 100% de Apoio na Burocracia | ≤30 chars |
+| **CTA** | Obter oferta | — |
+
+---
+
+## Conceito 3 — Prova Social Massiva (BOF)
+
+### Estratégia
+```yaml
+conceito: "1000 Histórias"
+creative_type: "5 star reviews screenshots"
+formato: "Feed 1:1"
+funnel_stage: "Hot (BOF)"
+hook_type: "Credibility"
+emotion_triggers: ["confiança", "pertencimento"]
+copy_type: "Social Proof"
+```
+
+### Hook → Hold → Offer
+| Fase | Elemento | Detalhe |
+|------|----------|---------|
+| **HOOK** | Visual | Mosaico de fotos de 20+ famílias segurando as chaves com o logo da Mirella. |
+| **HOLD** | Texto | "Mais de 1.000 famílias já saíram do aluguel com a Mirella Imóveis." |
+| **OFFER** | CTA | "Você é o próximo. Clique e simule." |
+
+### Copy
+| Elemento | Conteúdo | Limite |
+|----------|----------|--------|
+| **Headline** | 1.000 Famílias Atendidas! ⭐ | ≤40 chars |
+| **Texto-legenda** | "Achei que não conseguiria, mas a Mirella cuidou de tudo." ★★★★★<br><br>Histórias como a da Maria se repetem todos os dias aqui na Mirella Imóveis. Há 5 anos transformamos vidas através do Minha Casa Minha Vida. <br><br>Se você tem renda a partir de R$ 2.500, o seu sonho está mais perto do que você imagina.<br><br>↳ Clique e veja como garantimos sua aprovação! | 400-600 chars |
+| **Texto principal** | "Achei que não conseguiria, mas a Mirella cuidou de tudo." ★★★★★ | ≤125 chars |
+| **Descrição** | 5 Anos Realizando Sonhos | ≤30 chars |
+| **CTA** | Saiba mais | — |
+
+---
+*Nota: Este documento contém os 3 primeiros conceitos detalhados como demonstração. Os outros 7 seguem lógica similar de variação de Creative Types (UGC, Stats, FAQ, etc.).*
+    </script>
+
+    <script type="text/markdown" id="content-image-prompts">
+# Prompts de Imagem — Meta Ads Mirella Imóveis
+
+> Gerado em: 16/05/2026
+> Skill: guimkt-meta-ads v3.3
+
+---
+
+## Conceito 1 — O Fim do Aluguel
+**Creative Type:** Pain point & Solution
+**Style:** Mixed / Split Layout
+
+### Prompt Principal
+```
+Professional Facebook Ad split-screen composition. Left side: Desaturated, moody image of a person hand-delivering a stack of cash and a key to a grumpy landlord in a dimly lit old hallway. Right side: Vibrant, high-contrast image of the same person smiling joyfully, holding a brand new shiny key in front of a modern white house with orange accents. Large typography overlay: "CHEGA DE ALUGUEL" in bold Poppins font. Colors: #E36100 (primary), white. Real photography style, cinematic lighting, 4:5 aspect ratio.
+```
+
+---
+
+## Conceito 2 — Terreno à Chave
+**Creative Type:** Us vs Them / Old way vs New way
+**Style:** Infographic / Minimalist
+
+### Prompt Principal
+```
+Clean, minimalist Meta Ad layout on a #FDF0E9 beige background. Central visual: A stylized 3D path or "roadmap" starting from a plot of grass (terrain) leading to a finished modern house. Along the path, floating 3D icons: a document with a seal (credit), a blueprint (project), and finally a key. Headline in bold Poppins: "TERRENO À CHAVE". Subheadline: "Nós cuidamos de tudo". Style: Apple-inspired minimalist design, soft shadows, premium 3D elements, #E36100 accents, 9:16 aspect ratio.
+```
+
+---
+
+## Conceito 3 — 1000 Histórias
+**Creative Type:** 5 star reviews / Social Proof
+**Style:** Grid / UGC
+
+### Prompt Principal
+```
+Grid composition for Instagram Ad featuring a mosaic of 12 real-life looking photos of diverse Brazilian families (young couples, mothers with kids) smiling and holding house keys in front of different houses. In the center, a large #E36100 orange badge with white text: "+1.000 FAMÍLIAS". Overlay of five golden stars and a floating chat bubble with text: "Realizei meu sonho!". Authentic photography style, high saturation, warm mood, 4:5 aspect ratio.
+```
+
+---
+**Instruções:**
+- Use estes prompts no Midjourney, DALL-E 3 ou Stable Diffusion.
+- O aspect ratio (4:5 ou 9:16) já está incluído.
+- As cores hexadecimais da Mirella Imóveis foram integradas para manter a identidade visual.
+    </script>
+
+    <script type="text/markdown" id="content-social-plan">
+# Planejamento de Conteúdo (30 Dias) — Mirella Imóveis
+
+Este plano visa transformar o Instagram da Mirella Imóveis em uma máquina de autoridade e educação para o público MCMV.
+
+## 🏛️ Linhas Editoriais (Pilares)
+1.  **💡 MCMV Descomplicado (Educação - 40%):** Baixar a barreira da burocracia.
+2.  **🏗️ Prova Real (Autoridade - 30%):** Mostrar que a Mirella entrega o que promete.
+3.  **🏠 Sonho Possível (Conexão - 20%):** Humanizar a marca e gerar identificação.
+4.  **🎯 Oportunidade (Venda - 10%):** Ofertas diretas e escassas.
+
+---
+
+## 📅 Cronograma Mensal (Ciclo Semanal)
+
+### SEMANA 1: O Despertar (Foco: Dor do Aluguel)
+*   **Post 1 (Reels):** "O que você compra com o valor do seu aluguel?" (Comparativo visual).
+*   **Post 2 (Carrossel):** Guia definitivo do FGTS no MCMV.
+*   **Post 3 (Foto):** Foto de entrega de chaves com legenda sobre "Patrimônio da Família".
+*   **Post 4 (Vídeo):** Mirella explicando: "Por que nossa assessoria é gratuita para você?"
+*   **Post 5 (Oferta):** Lançamento de novos terrenos em bairro X.
+
+### SEMANA 2: A Segurança (Foco: Burocracia)
+*   **Post 1 (Carrossel):** Os 3 documentos que você precisa para começar sua simulação.
+*   **Post 2 (Reels):** Bastidores de uma obra em fase de fundação (Assessoria Técnica).
+*   **Post 3 (Depoimento):** Print de WhatsApp de cliente agradecendo a aprovação do crédito.
+*   **Post 4 (FAQ):** "Renda baixa aprova?" (Explicando a soma de rendas).
+*   **Post 5 (Oferta):** Casa modelo pronta para morar.
+
+### SEMANA 3: O Desejo (Foco: Personalização)
+*   **Post 1 (Reels):** Tour por uma casa personalizada (Terreno + Construção).
+*   **Post 2 (Carrossel):** 5 Dicas de decoração para casas MCMV.
+*   **Post 3 (Foto):** "Sua varanda gourmet te espera". (Foco no estilo de vida).
+*   **Post 4 (Vídeo):** "Como escolher o terreno ideal?" (Dica do corretor especialista).
+*   **Post 5 (Oferta):** Condições especiais para quem fechar este mês (Gatilho de Urgência).
+
+### SEMANA 4: A Decisão (Foco: Prova Social Massiva)
+*   **Post 1 (Reels):** Mosaico de 10 famílias atendidas nos últimos meses.
+*   **Post 2 (Carrossel):** Erros fatais ao tentar comprar sozinho (Insegurança).
+*   **Post 3 (Foto):** "5 Anos de Mirella Imóveis: Nossa história é a sua casa".
+*   **Post 4 (Vídeo):** "O que acontece depois que você assina com a gente?" (Processo transparente).
+*   **Post 5 (Oferta):** Chamada direta para simulação via link na Bio.
+
+---
+
+## 🎨 Diretrizes Visuais (Design System)
+*   **Cores:** Usar o `--mi-orange` para CTAs e palavras-chave.
+*   **Tipografia:** Manter a `Poppins` para legibilidade moderna.
+*   **Elementos:** Usar cards com efeito *glassmorphism* em carrosséis para passar uma imagem premium, mesmo sendo MCMV.
+
+---
+
+## 📈 KPIs de Acompanhamento
+- **Engajamento:** Comentários com dúvidas (indica que o pilar de Educação está funcionando).
+- **Salvamentos:** Em posts de dicas e checklists.
+- **Directs:** Pedidos de simulação (conversão final).
+    </script>
+
+    <script type="text/markdown" id="content-social-copy">
+# Legendas: Semana 01 — Mirella Imóveis
+**Tema da Semana:** O Despertar (A Dor do Aluguel)
+
+---
+
+## 🗓️ Segunda-feira (Reels)
+**Visual:** Vídeo rápido apontando para um boleto (aluguel) e depois para uma chave (casa nova).
+
+**Legenda:**
+O seu aluguel é um investimento... mas no bolso de outra pessoa. 🤐
+
+Já parou para somar quanto você já pagou de aluguel nos últimos 5 anos? Esse dinheiro foi embora e não volta mais.
+
+Agora, imagine esse mesmo valor (ou até menos!) sendo investido no que é SEU. No Minha Casa Minha Vida, você troca o boleto do aluguel pela parcela da sua casa própria.
+
+✅ Saia do zero e comece seu patrimônio hoje.
+
+↳ Comenta "SIMULAÇÃO" que eu te mostro como é possível.
+
+---
+
+## 🗓️ Terça-feira (Carrossel)
+**Visual:** Capa: "Seu FGTS pode ser a chave da sua casa."
+
+**Legenda:**
+O FGTS parado na conta rende quase nada. No mercado imobiliário, ele vale OURO! 💰
+
+Muitos acham que precisam de uma fortuna guardada para dar entrada, mas o segredo está no seu tempo de carteira assinada. Arraste para o lado e veja 3 formas de usar seu FGTS na Mirella Imóveis:
+
+1️⃣ Como valor total ou parcial da entrada.
+2️⃣ Para amortizar o saldo devedor.
+3️⃣ Para pagar as parcelas do financiamento.
+
+Não deixe o seu sonho parado no banco.
+
+📌 Salve este post para não esquecer!
+
+---
+
+## 🗓️ Quarta-feira (Foto)
+**Visual:** Família sorrindo com a placa "Realizei meu Sonho".
+
+**Legenda:**
+Mais um "adeus aluguel" registrado com sucesso! 📸✨
+
+Momentos como esse justificam nossos 5 anos de estrada. Não é só sobre tijolos e cimento, é sobre a segurança de saber que seus filhos terão um teto que é da família.
+
+Parabéns à família Silva pela conquista! Obrigado por confiarem na nossa assessoria do terreno à chave.
+
+E você, em qual bairro sonha em receber as suas chaves? Conta pra gente nos comentários! 👇
+
+---
+
+## 🗓️ Quinta-feira (Vídeo)
+**Visual:** Consultor falando sobre a assessoria gratuita.
+
+**Legenda:**
+"Mirella, quanto eu pago pela assessoria de vocês?" 🤔
+
+A resposta é: ZERO! Isso mesmo.
+
+Muita gente deixa de procurar ajuda profissional com medo de taxas extras. Mas aqui na Mirella Imóveis, nossa assessoria técnica e bancária é totalmente gratuita para você.
+
+Nós somos remunerados pelas instituições e parceiros, para garantir que você tenha o melhor projeto e a menor taxa, sem gastar um centavo a mais por isso.
+
+Nosso lucro é ver você de casa nova. 🏠🧡
+
+🚀 Marque um amigo que precisa saber disso!
+
+---
+
+## 🗓️ Sexta-feira (Oferta)
+**Visual:** Foto de terreno com a frase "Sua casa aqui".
+
+**Legenda:**
+ATENÇÃO: Novas unidades disponíveis em [Bairro Exemplo]! 📢
+
+Se você busca localização, segurança e um projeto moderno, essa é a sua chance.
+
+✅ Terrenos planos e prontos para construir.
+✅ Projetos personalizados de 2 ou 3 quartos.
+✅ Subsídios de até R$ 55 mil (MCMV).
+
+As unidades nessa região costumam esgotar em poucos dias. Não perca tempo.
+
+📲 Clique no link da Bio e fale agora com um consultor pelo WhatsApp!
+    </script>
+
+    <script type="text/markdown" id="content-social-prompts">
+# Prompts de Imagem: Semana 01 — Mirella Imóveis
+
+Estes prompts foram criados para garantir consistência visual com o Design System da marca e alta performance no Instagram.
+
+---
+
+## 🗓️ Segunda-feira (Reels)
+**Conceito:** O contraste entre a tristeza do aluguel e a alegria da casa própria.
+**Prompt:**
+> Professional photography, split screen composition. Left side: Dimly lit, moody interior of an old apartment with a "Rent Due" notice on a table, desaturated colors. Right side: Bright, sun-drenched modern living room with orange accent pillows and a smiling young couple holding house keys, vibrant colors. Cinematic lighting, realistic textures, high resolution, 9:16 aspect ratio.
+
+---
+
+## 🗓️ Terça-feira (Carrossel - Capa)
+**Conceito:** O FGTS como o "combustível" para a casa.
+**Prompt:**
+> Minimalist 3D render on a clean white and #FDF0E9 beige background. A large, shiny orange piggy bank (Mirella Orange #E36100) that is shaped like a modern house. Golden coins with the "FGTS" logo are being inserted into the chimney. Premium soft shadows, Apple-style product photography, 4:5 aspect ratio.
+
+---
+
+## 🗓️ Quarta-feira (Foto - Prova Social)
+**Conceito:** A emoção real da conquista.
+**Prompt:**
+> Authentic, high-quality photograph of a young Brazilian family (father, mother, and small child) laughing and hugging in front of a brand new contemporary white house. The father is holding a large cardboard plaque that says "REALIZAMOS NOSSO SONHO" in bold letters. Warm natural golden hour sunlight, sharp focus, genuine emotions, 4:5 aspect ratio.
+
+---
+
+## 🗓️ Quinta-feira (Vídeo - Fundo para Reels)
+**Conceito:** Profissionalismo e confiança (Assessoria).
+**Prompt:**
+> Professional portrait of a friendly real estate consultant in a business casual outfit, smiling warmly at the camera. In the background, a blurred modern office with orange glass partitions and architectural blueprints on the wall. The mood is trustworthy and welcoming. High-end commercial photography, soft bokeh, 9:16 aspect ratio.
+
+---
+
+## 🗓️ Sexta-feira (Oferta de Lançamento)
+**Conceito:** O potencial de construção do terreno.
+**Prompt:**
+> Aerial cinematic shot of a clean, well-manicured green plot of land in a beautiful residential neighborhood. A translucent, glowing 3D architectural wireframe of a modern 3-bedroom house is projected onto the plot, showing its potential. Bright blue sky, vibrant greenery, professional real estate drone photography, 4:5 aspect ratio.
+    </script>
+
+    <script type="text/markdown" id="content-wireframe-doc">
+# Wireframe-Tabela — Mirella Imóveis
+
+## 🚀 Espectro da Proposta de Valor
+1.  **Nível Empresa:** 5 anos e 1000+ famílias atendidas (Segurança absoluta).
+2.  **Nível Persona:** Mães solteiras e jovens que acham impossível comprar (Assessoria resolve a dúvida).
+3.  **Nível Produto:** Aquisição e Construção via MCMV (Personalização + Economia).
+4.  **Nível Aquisição:** "Sua casa do terreno à chave com parcela de aluguel".
+
+---
+
+## 📊 Estrutura da Landing Page (Framework PASTOR)
+
+| Seção | Elemento | Copy / Conteúdo | Notas para Designer |
+|-------|----------|-----------------|---------------------|
+| **Hero** | Headline | **Realize o sonho da sua casa própria com parcelas que cabem no seu bolso.** | Fonte Display, destaque em `--mi-orange`. |
+| **Hero** | Subheadline | Assessoria completa do terreno à entrega das chaves. Já ajudamos mais de 1.000 famílias a saírem do aluguel via Minha Casa Minha Vida. | Texto de apoio com prova social imediata. |
+| **Hero** | CTA | [Quero fazer minha simulação gratuita] | Botão vibrante com sombra suave. |
+| **Problem** | Headline | Cansado de ver seu dinheiro "sumir" todo mês no aluguel? | Título com carga emocional. |
+| **Pain** | Texto | Burocracia bancária, medo de não aprovar o crédito ou insegurança na hora de construir... nós sabemos que o caminho para a casa própria parece difícil. | Cards com ícones de "fricção" (cadeado, papéis, dúvida). |
+| **Amplify** | Headline | Enquanto você adia, o preço do terreno sobe e o seu sonho fica mais distante. | Gráfico simples ou texto comparativo. |
+| **Story/Solution** | Headline | Na Mirella Imóveis, nós fazemos tudo por você. | Seção com fundo `--mi-beige`. |
+| **Story/Solution** | Benefícios | • Escolha do terreno ideal<br>• Projeto personalizado<br>• Aprovação de crédito facilitada<br>• Acompanhamento até a entrega das chaves | Lista com checkmarks em laranja. |
+| **Transformation** | Prova Social | +1.000 famílias atendidas em 5 anos. | Carrossel de fotos de entregas de chaves. |
+| **Transformation** | Depoimento | "Achei que como mãe solteira não conseguiria, mas a Mirella cuidou de tudo e hoje tenho meu teto." - Maria S. | Vídeo ou Card de depoimento. |
+| **Offer** | Headline | Sua casa nova a partir de R$ 170 mil com as vantagens do Minha Casa Minha Vida. | Destaque para o valor de entrada e subsídios. |
+| **Response** | Formulário | Nome, WhatsApp, Renda aproximada, Possui FGTS? | Formulário glassmorphism à direita. |
+| **Response** | CTA Final | [Consultar minha aprovação agora] | CTA de alta intenção. |
+
+---
+
+## 🛡️ Defesa do Wireframe
+1.  **Framework PASTOR:** Escolhido porque o público MCMV tem alta carga emocional (sonho) e alta incerteza (burocracia). O framework permite amplificar a dor do aluguel antes de apresentar a Mirella como o "Pastor" que guia o rebanho até a solução.
+2.  **Fórmula de Conversão:**
+    *   **Motivação (m):** Focada em "Sair do aluguel" (dor universal do ICP).
+    *   **Proposta de Valor (v):** Assessoria "Terreno à Chave" é o diferencial único.
+    *   **Incerteza (a):** Mitigada pelo número massivo de 1.000 famílias atendidas.
+3.  **Resultado Esperado:** Leads com alta intenção de simulação, já conscientes de que a Mirella resolve a parte burocrática.
+    </script>
+
+    <!-- CORE SYSTEM JS LOGIC -->
+    <script>
+        // Dados de configuração de cada Tab
+        const tabConfigs = {
+            'dashboard': {
+                title: 'Geral',
+                subtitle: 'Visão geral do projeto e progresso da Mirella Imóveis',
+                icon: 'fa-home',
+                showCopy: false,
+                showOpen: false,
+                contentScriptId: null
+            },
+            'brandformance': {
+                title: 'Plano de Brandformance',
+                subtitle: 'Estratégia de mídia, canais e cenários de investimentos',
+                icon: 'fa-bullseye',
+                showCopy: true,
+                showOpen: false,
+                contentScriptId: 'content-brandformance'
+            },
+            'icp': {
+                title: 'Perfil ICP / Personas',
+                subtitle: '9 dimensões, modelo psicográfico e barreiras de conversão',
+                icon: 'fa-users',
+                showCopy: true,
+                showOpen: false,
+                contentScriptId: 'content-icp'
+            },
+            'offer': {
+                title: 'Diagnóstico da Oferta',
+                subtitle: 'Score de atratividade, diferenciais e resposta a objeções',
+                icon: 'fa-comment-dollar',
+                showCopy: true,
+                showOpen: false,
+                contentScriptId: 'content-offer'
+            },
+            'concepts': {
+                title: 'Conceitos de Criativos (Meta Ads)',
+                subtitle: '3 conceitos detalhados baseados em Hook, Hold e Offer',
+                icon: 'fa-lightbulb',
+                showCopy: true,
+                showOpen: false,
+                contentScriptId: 'content-concepts'
+            },
+            'image-prompts': {
+                title: 'Prompts de Imagens (Meta Ads)',
+                subtitle: 'Comandos prontos para geração de criativos de alta performance',
+                icon: 'fa-image',
+                showCopy: true,
+                showOpen: false,
+                contentScriptId: 'content-image-prompts'
+            },
+            'social-plan': {
+                title: 'Cronograma de Postagens',
+                subtitle: 'Planejamento editorial de 30 dias para atração e autoridade',
+                icon: 'fa-calendar-alt',
+                showCopy: true,
+                showOpen: false,
+                contentScriptId: 'content-social-plan'
+            },
+            'social-copy': {
+                title: 'Legendas Semana 01',
+                subtitle: 'Cópias prontas formatadas e diagramadas para posts no feed',
+                icon: 'fa-feather-alt',
+                showCopy: true,
+                showOpen: false,
+                contentScriptId: 'content-social-copy'
+            },
+            'social-prompts': {
+                title: 'Prompts de Imagens (Posts)',
+                subtitle: 'Geração de assets visuais consistentes com o Instagram',
+                icon: 'fa-magic',
+                showCopy: true,
+                showOpen: false,
+                contentScriptId: 'content-social-prompts'
+            },
+            'wireframe-doc': {
+                title: 'Estrutura do Wireframe',
+                subtitle: 'Framework de copy PASTOR e distribuição das seções',
+                icon: 'fa-table',
+                showCopy: true,
+                showOpen: false,
+                contentScriptId: 'content-wireframe-doc'
+            },
+            'prototypes': {
+                title: 'Visualizar Protótipos',
+                subtitle: 'Visualização direta da Landing Page Premium e Wireframe HTML',
+                icon: 'fa-laptop-code',
+                showCopy: false,
+                showOpen: true,
+                contentScriptId: null
+            }
+        };
+
+        // Cache dos markdowns já renderizados para velocidade
+        const renderCache = {};
+
+        // Inicia e mapeia eventos
+        document.addEventListener('DOMContentLoaded', () => {
+            initNavigation();
+            initTheme();
+            initActions();
+            initPrototypesNavigation();
+            
+            // Renderiza primeira tab
+            renderActiveTabMarkdown('dashboard');
+        });
+
+        // Configuração de Navegação entre Tabs principais
+        function initNavigation() {
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const tabId = item.getAttribute('data-tab');
+                    
+                    // Altera classes ativas no menu
+                    menuItems.forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    // Altera aba de conteúdo ativa
+                    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                    const activeTabContent = document.getElementById(`tab-${tabId}`);
+                    if (activeTabContent) {
+                        activeTabContent.classList.add('active');
+                    }
+
+                    // Atualiza cabeçalho
+                    updateTopbar(tabId);
+                    
+                    // Renderiza se for tab de Markdown
+                    renderActiveTabMarkdown(tabId);
+                });
+            });
+        }
+
+        // Atualiza a barra superior dinâmica
+        function updateTopbar(tabId) {
+            const config = tabConfigs[tabId];
+            if (!config) return;
+
+            document.getElementById('header-title').textContent = config.title;
+            document.getElementById('header-subtitle').textContent = config.subtitle;
+            
+            const iconElement = document.getElementById('header-icon');
+            iconElement.className = 'doc-icon';
+            iconElement.innerHTML = `<i class="fas ${config.icon}"></i>`;
+            
+            // Botão Copiar
+            const btnCopy = document.getElementById('btn-copy');
+            btnCopy.style.display = config.showCopy ? 'flex' : 'none';
+
+            // Botão Abrir Externo
+            const btnOpen = document.getElementById('btn-open-external');
+            btnOpen.style.display = config.showOpen ? 'flex' : 'none';
+        }
+
+        // Renderização dinânica de Markdown via marked.js
+        function renderActiveTabMarkdown(tabId) {
+            const config = tabConfigs[tabId];
+            if (!config || !config.contentScriptId) return;
+
+            const targetDiv = document.getElementById(`md-${tabId}`);
+            if (!targetDiv) return;
+
+            // Se já estiver em cache, evita re-renderizar
+            if (renderCache[tabId]) {
+                targetDiv.innerHTML = renderCache[tabId];
+                return;
+            }
+
+            const scriptContent = document.getElementById(config.contentScriptId);
+            if (!scriptContent) return;
+
+            const rawMarkdown = scriptContent.textContent.trim();
+            
+            // Executa conversão
+            try {
+                if (typeof marked !== 'undefined') {
+                    const htmlContent = marked.parse(rawMarkdown);
+                    renderCache[tabId] = htmlContent;
+                    targetDiv.innerHTML = htmlContent;
+                } else {
+                    // Fallback texto cru se marked.js falhar offline
+                    targetDiv.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${rawMarkdown}</pre>`;
+                }
+            } catch (err) {
+                console.error("Erro ao renderizar markdown:", err);
+                targetDiv.innerHTML = `<pre style="white-space: pre-wrap;">${rawMarkdown}</pre>`;
+            }
+        }
+
+        // Ações da Topbar (Copiar e Abrir Externo)
+        function initActions() {
+            // Ação de copiar
+            document.getElementById('btn-copy').addEventListener('click', () => {
+                const activeMenu = document.querySelector('.menu-item.active');
+                if (!activeMenu) return;
+                
+                const tabId = activeMenu.getAttribute('data-tab');
+                const config = tabConfigs[tabId];
+                if (!config || !config.contentScriptId) return;
+
+                const scriptContent = document.getElementById(config.contentScriptId);
+                if (!scriptContent) return;
+
+                // Copia o conteúdo cru (Markdown) para melhor uso externo
+                navigator.clipboard.writeText(scriptContent.textContent.trim())
+                    .then(() => {
+                        showToast();
+                    })
+                    .catch(err => {
+                        console.error('Falha ao copiar:', err);
+                    });
+            });
+
+            // Ação de abrir externo (iframes)
+            document.getElementById('btn-open-external').addEventListener('click', () => {
+                const iframeElement = document.getElementById('prototype-iframe');
+                if (iframeElement && iframeElement.src) {
+                    window.open(iframeElement.src, '_blank');
+                }
+            });
+        }
+
+        // Navegação de protótipos em iframe
+        function initPrototypesNavigation() {
+            const subtabBtns = document.querySelectorAll('.subtab-btn');
+            const iframe = document.getElementById('prototype-iframe');
+
+            subtabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    subtabBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    const pageUrl = btn.getAttribute('data-iframe');
+                    if (iframe) {
+                        iframe.src = pageUrl;
+                    }
+                });
+            });
+        }
+
+        // Alternância de Tema (Light vs Dark)
+        function initTheme() {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            
+            // Verifica se o usuário tem preferência salva
+            const savedTheme = localStorage.getItem('mi-hub-theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            updateThemeButtonIcon(savedTheme);
+
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = document.body.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                
+                document.body.setAttribute('data-theme', newTheme);
+                localStorage.setItem('mi-hub-theme', newTheme);
+                updateThemeButtonIcon(newTheme);
+            });
+        }
+
+        function updateThemeButtonIcon(theme) {
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            if (theme === 'dark') {
+                themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
+                document.querySelector('.theme-switch-label').textContent = 'Tema Claro';
+            } else {
+                themeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
+                document.querySelector('.theme-switch-label').textContent = 'Tema Escuro';
+            }
+        }
+
+        // Toast de Sucesso para Cópia
+        function showToast() {
+            const toast = document.getElementById('copy-toast');
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

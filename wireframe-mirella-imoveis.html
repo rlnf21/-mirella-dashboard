@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireframe-Tabela — Mirella Imóveis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Inter+Tight:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-accent: #864df9;
+            --brand-bg: #f7f3ed;
+            --mi-orange: #E36100;
+            --text-dark: #212529;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--brand-bg);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+            padding-bottom: 20px;
+        }
+
+        .logo {
+            font-family: 'Inter Tight', sans-serif;
+            font-size: 24px;
+            color: var(--brand-accent);
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: 'Inter Tight', sans-serif;
+            font-size: 32px;
+            margin: 0;
+        }
+
+        .wireframe-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--white);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
+        }
+
+        .wireframe-table th, .wireframe-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        .wireframe-table th {
+            background: #f8f9fa;
+            font-weight: 700;
+            color: var(--brand-accent);
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .section-tag {
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .framework-tag {
+            color: var(--mi-orange);
+            font-weight: 700;
+        }
+
+        .defense-section {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        .defense-section h2 {
+            font-family: 'Inter Tight', sans-serif;
+            color: var(--brand-accent);
+            margin-top: 0;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 60px;
+        }
+
+        .footer a { color: var(--brand-accent); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Wireframe-Tabela</h1>
+        </header>
+
+        <table class="wireframe-table">
+            <thead>
+                <tr>
+                    <th>Seção</th>
+                    <th>Framework</th>
+                    <th>Elemento</th>
+                    <th>Conteúdo / Copy</th>
+                    <th>Notas Designer</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="section-tag">Hero</span></td>
+                    <td><span class="framework-tag">P</span></td>
+                    <td>Headline</td>
+                    <td><strong>Realize o sonho da sua casa própria com parcelas que cabem no seu bolso.</strong></td>
+                    <td>Destaque em laranja, fonte display.</td>
+                </tr>
+                <tr>
+                    <td><span class="section-tag">Hero</span></td>
+                    <td><span class="framework-tag">P</span></td>
+                    <td>CTA</td>
+                    <td>[Quero fazer minha simulação gratuita]</td>
+                    <td>Botão principal vibrante.</td>
+                </tr>
+                <tr>
+                    <td><span class="section-tag">Problem</span></td>
+                    <td><span class="framework-tag">P</span></td>
+                    <td>Headline</td>
+                    <td>Cansado de ver seu dinheiro "sumir" todo mês no aluguel?</td>
+                    <td>Tom emocional, fundo neutro.</td>
+                </tr>
+                <tr>
+                    <td><span class="section-tag">Amplify</span></td>
+                    <td><span class="framework-tag">A</span></td>
+                    <td>Texto</td>
+                    <td>Enquanto você adia, o preço do terreno sobe e o seu sonho fica mais distante.</td>
+                    <td>Uso de ícones de "tempo/dinheiro".</td>
+                </tr>
+                <tr>
+                    <td><span class="section-tag">Solution</span></td>
+                    <td><span class="framework-tag">S</span></td>
+                    <td>Benefícios</td>
+                    <td>Assessoria completa: do terreno à entrega das chaves.</td>
+                    <td>Lista com checkmarks laranjas.</td>
+                </tr>
+                <tr>
+                    <td><span class="section-tag">Proof</span></td>
+                    <td><span class="framework-tag">T</span></td>
+                    <td>Social</td>
+                    <td>+1.000 famílias atendidas em 5 anos.</td>
+                    <td>Fotos reais de entregas.</td>
+                </tr>
+                <tr>
+                    <td><span class="section-tag">Offer</span></td>
+                    <td><span class="framework-tag">O</span></td>
+                    <td>Preço</td>
+                    <td>Casas a partir de R$ 170 mil via MCMV.</td>
+                    <td>Foco em acessibilidade.</td>
+                </tr>
+                <tr>
+                    <td><span class="section-tag">Response</span></td>
+                    <td><span class="framework-tag">R</span></td>
+                    <td>Form</td>
+                    <td>Nome, WhatsApp, Renda, FGTS.</td>
+                    <td>Card Glassmorphism.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="defense-section">
+            <h2>🛡️ Defesa do Wireframe</h2>
+            <p><strong>Framework PASTOR:</strong> Escolhido para atacar o "sonho" e a "burocracia". Começamos com a dor do aluguel e terminamos com a facilidade da assessoria da Mirella.</p>
+            <p><strong>Fórmula de Conversão:</strong> Focamos em reduzir a incerteza (a) através da prova social massiva e aumentar a motivação (m) comparando a parcela com o aluguel.</p>
+        </div>
+
+        <div class="footer"></div>
+    </div>
+</body>
+</html>
