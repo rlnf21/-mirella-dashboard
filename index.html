@@ -1085,8 +1085,29 @@
 
             <!-- ADS DASHBOARD TAB -->
             <section class="tab-content" id="tab-ads-results">
-                <div class="iframe-container" style="height: calc(100vh - 200px);">
-                    <iframe id="ads-iframe" src="https://mirella-dashboard.onrender.com/dashboard"></iframe>
+                <style>
+                .ads-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 15px; }
+                .ads-loading i { font-size: 40px; color: var(--mi-orange); }
+                .ads-loading p { color: var(--text-muted); font-size: 14px; }
+                .ads-link { margin-top: 10px; }
+                .ads-link a { color: var(--mi-orange); font-weight: 600; text-decoration: none; }
+                .ads-link a:hover { text-decoration: underline; }
+                </style>
+                <div class="iframe-container" style="height: calc(100vh - 200px); position: relative;">
+                    <div class="ads-loading" id="ads-loading">
+                        <i class="fas fa-chart-bar"></i>
+                        <p>Carregando dashboard Meta Ads...</p>
+                        <p style="font-size: 12px;">(pode levar até 30s na primeira vez)</p>
+                        <div class="ads-link">
+                            <a href="https://mirella-dashboard.onrender.com/dashboard" target="_blank">
+                                <i class="fas fa-external-link-alt"></i> Abrir em nova aba
+                            </a>
+                        </div>
+                    </div>
+                    <iframe id="ads-iframe" src="https://mirella-dashboard.onrender.com/dashboard"
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+                        onload="document.getElementById('ads-loading').style.display='none'; this.style.position='relative';">
+                    </iframe>
                 </div>
             </section>
 
