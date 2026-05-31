@@ -29,7 +29,7 @@ TOKEN_PATH = os.path.join(SCRIPT_DIR, TOKEN_FILE)
 
 # Cache separado: dados estáticos (campanhas, anúncios) vs insights por período
 static_cache = {"campaigns": None, "ads": None, "expires_at": 0}
-insights_cache = {"data": None, "expires_at": 0, "ttl": 300, "key": None}
+insights_cache = {"data": {}, "ttl": 300}
 
 app = Flask(__name__)
 
@@ -172,30 +172,50 @@ def get_data(since=None, until=None):
     cache_key = f"{since.isoformat()}_{until.isoformat()}"
     now = time.time()
 
-    if insights_cache["data"] and now < insights_cache["expires_at"] and insights_cache["key"] == cache_key:
-        return insights_cache["data"]
+    if isinstance(insights_cache.get("data"), dict) and insights_cache.get("data", {}).get(cache_key):
+        entry = insights_cache["data"][cache_key]
+        if now < entry["expires_at"]:
+            return entry["data"]
 
-    period_len = (until - since).days
-    prev_until = since - datetime.timedelta(days=1)
-    prev_since = since - datetime.timedelta(days=period_len + 1)
+    def fetch_one(s, u):
+        period_len = (u - s).days
+        prev_u = s - datetime.timedelta(days=1)
+        prev_s = s - datetime.timedelta(days=period_len + 1)
+        campaigns, ads = get_static_data()
+        daily, current, previous, camp_rows = fetch_insights_for_range(s, u, prev_s, prev_u)
+        return {
+            "today": u,
+            "since": s,
+            "campaigns": campaigns,
+            "daily": daily,
+            "current": current[0] if current else {},
+            "previous": previous[0] if previous else {},
+            "camp_rows": camp_rows,
+            "ads": ads
+        }
 
-    campaigns, ads = get_static_data()
-    daily, current, previous, camp_rows = fetch_insights_for_range(since, until, prev_since, prev_until)
+    result = fetch_one(since, until)
+    if not isinstance(insights_cache.get("data"), dict):
+        insights_cache["data"] = {}
+    insights_cache["data"][cache_key] = {"data": result, "expires_at": now + insights_cache["ttl"]}
 
-    data = {
-        "today": until,
-        "since": since,
-        "campaigns": campaigns,
-        "daily": daily,
-        "current": current[0] if current else {},
-        "previous": previous[0] if previous else {},
-        "camp_rows": camp_rows,
-        "ads": ads
-    }
-    insights_cache["data"] = data
-    insights_cache["expires_at"] = now + insights_cache["ttl"]
-    insights_cache["key"] = cache_key
-    return data
+    # Pré-carregar outros períodos em background para navegação instantânea
+    if len(insights_cache["data"]) < 4:
+        other_periods = []
+        for days in [7, 30]:
+            s = today - datetime.timedelta(days=days)
+            k = f"{s.isoformat()}_{today.isoformat()}"
+            if k not in insights_cache["data"]:
+                other_periods.append((k, s, today))
+        if other_periods:
+            def preload():
+                for k, s, u in other_periods:
+                    d = fetch_one(s, u)
+                    insights_cache["data"][k] = {"data": d, "expires_at": time.time() + insights_cache["ttl"]}
+            import threading
+            threading.Thread(target=preload, daemon=True).start()
+
+    return result
 
 # ===== HELPERS DE FORMATAÇÃO =====
 
@@ -361,8 +381,7 @@ def dashboard():
 
 @app.route("/api/refresh")
 def api_refresh():
-    insights_cache["data"] = None
-    insights_cache["expires_at"] = 0
+    insights_cache["data"] = {}
     static_cache["campaigns"] = None
     static_cache["expires_at"] = 0
     return jsonify({"status": "ok", "message": "Cache limpo. Próximo acesso buscará dados novos."})
