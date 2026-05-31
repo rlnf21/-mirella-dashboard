@@ -100,6 +100,23 @@ font-size: 16px;
 }
 .theme-btn:hover { background: var(--mi-orange); color: #fff; }
 
+.period-bar {
+display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+padding: 15px 30px; border-bottom: 1px solid var(--border-color);
+background: var(--bg-card);
+}
+.period-bar .period-label {
+font-size: 12px; color: var(--text-muted); font-weight: 600;
+text-transform: uppercase; letter-spacing: 0.5px;
+}
+.period-btn {
+padding: 7px 16px; border-radius: 8px; border: 1px solid var(--border-color);
+background: var(--bg-card); color: var(--text-main); font-size: 13px;
+font-weight: 600; cursor: pointer; font-family: Inter; transition: all 0.2s;
+}
+.period-btn:hover { border-color: var(--mi-orange); color: var(--mi-orange); }
+.period-btn.active { background: var(--mi-orange); color: #fff; border-color: var(--mi-orange); }
+
 .content { padding: 25px 30px; max-width: 1400px; margin: 0 auto; }
 
 .cards-grid {
@@ -219,12 +236,21 @@ overflow: hidden;
 <div class="topbar-left">
 <img src="https://mirellaimoveis.com/wp-content/uploads/2025/09/Camada-0.png" alt="Mirella Imóveis">
 <span class="badge">Meta Ads</span>
-<span class="update-info">Atualizado em {{ updated_at }} &middot; {{ start_90 }} a {{ today }}</span>
+<span class="update-info">Atualizado em {{ updated_at }} &middot; {{ since }} a {{ until }}</span>
 </div>
 <div class="topbar-right">
-<button class="refresh-btn" onclick="refreshData(this)"><i class="fas fa-sync-alt"></i> Atualizar</button>
 <button class="theme-btn" id="theme-toggle"><i class="fas fa-moon"></i></button>
 </div>
+</div>
+
+<div class="period-bar">
+<span class="period-label"><i class="fas fa-calendar-alt"></i> Período:</span>
+<button class="period-btn {{ 'active' if active_period == '7' }}" onclick="goPeriod(7)">7d</button>
+<button class="period-btn {{ 'active' if active_period == '30' }}" onclick="goPeriod(30)">30d</button>
+<button class="period-btn {{ 'active' if active_period == '90' }}" onclick="goPeriod(90)">90d</button>
+<button class="period-btn {{ 'active' if active_period == 'custom' }}" onclick="document.getElementById('datepicker').click()">&#128197; Custom</button>
+<input type="text" id="datepicker" style="display:none" placeholder="Selecionar datas">
+<button class="refresh-btn" onclick="refreshData(this)"><i class="fas fa-sync-alt"></i> Atualizar</button>
 </div>
 
 <div class="content">
@@ -402,6 +428,27 @@ html.setAttribute('data-theme', isDark ? 'light' : 'dark');
 document.getElementById('theme-toggle').innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
 });
 
+// Period navigation
+function goPeriod(days) {
+window.location.href = '/dashboard?days=' + days;
+}
+
+// Date picker (custom period)
+const picker = flatpickr('#datepicker', {
+mode: 'range',
+dateFormat: 'Y-m-d',
+locale: 'pt',
+maxDate: 'today',
+defaultDate: ['{{ since_str }}', '{{ until_str }}'],
+onClose: function(selectedDates) {
+if (selectedDates.length === 2) {
+const since = selectedDates[0].toISOString().split('T')[0];
+const until = selectedDates[1].toISOString().split('T')[0];
+window.location.href = '/dashboard?since=' + since + '&until=' + until;
+}
+}
+});
+
 // Table sorting
 document.querySelectorAll('#camp-table th').forEach(th => {
 th.addEventListener('click', function() {
@@ -429,12 +476,12 @@ if (h !== this) h.dataset.asc = '';
 });
 });
 
-// Refresh
+// Refresh (preserva período atual)
 function refreshData(btn) {
 btn.classList.add('spinning');
 fetch('/api/refresh').then(r => r.json()).then(() => {
-location.reload();
-}).catch(() => location.reload());
+window.location.href = window.location.href;
+}).catch(() => window.location.reload());
 }
 </script>
 </body>

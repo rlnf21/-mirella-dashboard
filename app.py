@@ -28,7 +28,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 TOKEN_PATH = os.path.join(SCRIPT_DIR, TOKEN_FILE)
 
 # Cache em memória (evita bater na API a cada refresh)
-cache = {"data": None, "expires_at": 0, "ttl": 300}
+cache = {"data": None, "expires_at": 0, "ttl": 300, "key": None}
 
 app = Flask(__name__)
 
@@ -110,37 +110,37 @@ def parse_actions(insight):
             except: pass
     return leads, cpl
 
-def fetch_all_data():
-    today = datetime.date.today()
-    start_90 = today - datetime.timedelta(days=90)
-    start_180 = today - datetime.timedelta(days=180)
+def fetch_data_for_range(since_date, until_date):
+    period_len = (until_date - since_date).days
+    prev_until = since_date - datetime.timedelta(days=1)
+    prev_since = since_date - datetime.timedelta(days=period_len + 1)
 
-    def tr(since, until):
-        return json.dumps({"since": since.isoformat(), "until": until.isoformat()})
+    def tr(s, u):
+        return json.dumps({"since": s.isoformat(), "until": u.isoformat()})
 
     campaigns = fetch_all(f"{AD_ACCOUNT}/campaigns", {"fields": "id,name,status,objective", "limit": 50})
 
     daily = fetch_all(f"{AD_ACCOUNT}/insights", {
-        "time_range": tr(start_90, today),
+        "time_range": tr(since_date, until_date),
         "time_increment": 1,
         "fields": "date_start,spend,impressions,clicks,ctr,cpc,cpm,reach",
         "limit": 100
     })
 
     current = fetch_all(f"{AD_ACCOUNT}/insights", {
-        "time_range": tr(start_90, today),
+        "time_range": tr(since_date, until_date),
         "fields": "spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type",
         "limit": 10
     })
 
     previous = fetch_all(f"{AD_ACCOUNT}/insights", {
-        "time_range": tr(start_180, start_90 - datetime.timedelta(days=1)),
+        "time_range": tr(prev_since, prev_until),
         "fields": "spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type",
         "limit": 10
     })
 
     camp_rows = fetch_all(f"{AD_ACCOUNT}/insights", {
-        "time_range": tr(start_90, today),
+        "time_range": tr(since_date, until_date),
         "level": "campaign",
         "fields": "campaign_name,spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type",
         "limit": 50
@@ -152,9 +152,8 @@ def fetch_all_data():
     })
 
     return {
-        "today": today,
-        "start_90": start_90,
-        "start_180": start_180,
+        "today": until_date,
+        "since": since_date,
         "campaigns": campaigns,
         "daily": daily,
         "current": current[0] if current else {},
@@ -163,12 +162,19 @@ def fetch_all_data():
         "ads": ads
     }
 
-def get_data():
+def get_data(since=None, until=None):
+    today = datetime.date.today()
+    if since is None:
+        since = today - datetime.timedelta(days=90)
+    if until is None:
+        until = today
+    cache_key = f"{since.isoformat()}_{until.isoformat()}"
     now = time.time()
-    if cache["data"] and now < cache["expires_at"]:
+    if cache["data"] and now < cache["expires_at"] and cache["key"] == cache_key:
         return cache["data"]
-    cache["data"] = fetch_all_data()
+    cache["data"] = fetch_data_for_range(since, until)
     cache["expires_at"] = now + cache["ttl"]
+    cache["key"] = cache_key
     return cache["data"]
 
 # ===== HELPERS DE FORMATAÇÃO =====
@@ -199,7 +205,23 @@ def fmt_delta(val, reverse=False):
 @app.route("/dashboard")
 def dashboard():
     try:
-        d = get_data()
+        today = datetime.date.today()
+        since_param = request.args.get("since")
+        until_param = request.args.get("until")
+        days_param = request.args.get("days")
+
+        if since_param and until_param:
+            since = datetime.date.fromisoformat(since_param)
+            until = datetime.date.fromisoformat(until_param)
+        elif days_param:
+            days = int(days_param)
+            since = today - datetime.timedelta(days=days)
+            until = today
+        else:
+            since = today - datetime.timedelta(days=90)
+            until = today
+
+        d = get_data(since, until)
         cur, prev = d["current"], d["previous"]
 
         c_spend = safe_float(cur.get("spend"))
@@ -240,10 +262,12 @@ def dashboard():
         daily_imps = [safe_int(x.get("impressions")) for x in d["daily"]]
 
         # Mapa de campanhas anteriores para comparação na tabela
+        prev_period_len = (until - since).days
+        prev_until = since - datetime.timedelta(days=1)
+        prev_since = since - datetime.timedelta(days=prev_period_len + 1)
         camp_map = {}
-        # Busca dados anteriores por campanha (já disponível via fetch)
         camp_prev = fetch_all(f"{AD_ACCOUNT}/insights", {
-            "time_range": json.dumps({"since": d["start_180"].isoformat(), "until": (d["start_90"] - datetime.timedelta(days=1)).isoformat()}),
+            "time_range": json.dumps({"since": prev_since.isoformat(), "until": prev_until.isoformat()}),
             "level": "campaign",
             "fields": "campaign_name,spend",
             "limit": 50
@@ -284,6 +308,17 @@ def dashboard():
                 "spend": fmt_money(safe_float(ins.get("spend")))
             })
 
+        # Determinar qual aba está ativa
+        period_days = (until - since).days
+        if period_days <= 7:
+            active_period = "7"
+        elif period_days <= 30:
+            active_period = "30"
+        elif period_days <= 90:
+            active_period = "90"
+        else:
+            active_period = "custom"
+
         return render_template("dashboard.html",
             cards=cards,
             daily_labels=json.dumps(daily_labels),
@@ -292,8 +327,11 @@ def dashboard():
             camp_table=camp_table,
             ads_list=ads_list,
             updated_at=datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
-            today=d["today"],
-            start_90=d["start_90"]
+            since=since,
+            until=until,
+            active_period=active_period,
+            since_str=since.isoformat(),
+            until_str=until.isoformat()
         )
     except Exception as e:
         print(f"ERRO no dashboard: {e}", flush=True)
