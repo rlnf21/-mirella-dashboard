@@ -116,6 +116,16 @@ font-weight: 600; cursor: pointer; font-family: Inter; transition: all 0.2s;
 }
 .period-btn:hover { border-color: var(--mi-orange); color: var(--mi-orange); }
 .period-btn.active { background: var(--mi-orange); color: #fff; border-color: var(--mi-orange); }
+.period-btn.loading { opacity: 0.5; pointer-events: none; }
+.period-btn.loading i { animation: spin 0.8s linear infinite; }
+.overlay-loading {
+display: none; position: fixed; inset: 0; z-index: 999;
+background: var(--bg-page); opacity: 0.8;
+align-items: center; justify-content: center; flex-direction: column; gap: 10px;
+}
+.overlay-loading.show { display: flex; }
+.overlay-loading i { font-size: 40px; color: var(--mi-orange); animation: spin 0.8s linear infinite; }
+.overlay-loading p { color: var(--text-muted); font-size: 14px; font-weight: 500; }
 
 .content { padding: 25px 30px; max-width: 1400px; margin: 0 auto; }
 
@@ -241,6 +251,11 @@ overflow: hidden;
 <div class="topbar-right">
 <button class="theme-btn" id="theme-toggle"><i class="fas fa-moon"></i></button>
 </div>
+</div>
+
+<div class="overlay-loading" id="loading-overlay">
+<i class="fas fa-circle-notch"></i>
+<p>Carregando dados do período...</p>
 </div>
 
 <div class="period-bar">
@@ -430,6 +445,7 @@ document.getElementById('theme-toggle').innerHTML = isDark ? '<i class="fas fa-m
 
 // Period navigation
 function goPeriod(days) {
+document.getElementById('loading-overlay').classList.add('show');
 window.location.href = '/dashboard?days=' + days;
 }
 
@@ -442,11 +458,17 @@ maxDate: 'today',
 defaultDate: ['{{ since_str }}', '{{ until_str }}'],
 onClose: function(selectedDates) {
 if (selectedDates.length === 2) {
+document.getElementById('loading-overlay').classList.add('show');
 const since = selectedDates[0].toISOString().split('T')[0];
 const until = selectedDates[1].toISOString().split('T')[0];
 window.location.href = '/dashboard?since=' + since + '&until=' + until;
 }
 }
+});
+
+// Hide overlay when page loads
+window.addEventListener('load', function() {
+document.getElementById('loading-overlay').classList.remove('show');
 });
 
 // Table sorting

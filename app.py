@@ -5,7 +5,7 @@ Uso: python app.py
 Acessar: http://localhost:5000/dashboard
 """
 
-import json, os, sys, time, datetime
+import json, os, sys, time, datetime, concurrent.futures
 
 try:
     import requests
@@ -27,140 +27,59 @@ BASE_URL = f"https://graph.facebook.com/{API_VERSION}"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 TOKEN_PATH = os.path.join(SCRIPT_DIR, TOKEN_FILE)
 
-# Cache em memória (evita bater na API a cada refresh)
-cache = {"data": None, "expires_at": 0, "ttl": 300, "key": None}
+# Cache separado: dados estáticos (campanhas, anúncios) vs insights por período
+static_cache = {"campaigns": None, "ads": None, "expires_at": 0}
+insights_cache = {"data": None, "expires_at": 0, "ttl": 300, "key": None}
 
-app = Flask(__name__)
+def get_static_data():
+    now = time.time()
+    if static_cache["campaigns"] and now < static_cache["expires_at"]:
+        return static_cache["campaigns"], static_cache["ads"]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
+        fut_c = ex.submit(fetch_all, f"{AD_ACCOUNT}/campaigns", {"fields": "id,name,status,objective", "limit": 50})
+        fut_a = ex.submit(fetch_all, f"{AD_ACCOUNT}/ads", {
+            "fields": "id,name,status,creative{thumbnail_url,image_url,title,body},insights{spend,impressions,clicks,ctr,cpc}",
+            "limit": 50
+        })
+        campaigns = fut_c.result()
+        ads = fut_a.result()
+    static_cache["campaigns"] = campaigns
+    static_cache["ads"] = ads
+    static_cache["expires_at"] = now + 600  # 10 min
+    return campaigns, ads
 
-# ===== TOKEN =====
-
-def load_token():
-    if os.path.exists(TOKEN_PATH):
-        try:
-            with open(TOKEN_PATH, "r") as f:
-                data = json.load(f)
-            if data.get("expires_at", 0) > time.time() - 86400:
-                return data["token"]
-        except:
-            pass
-    return None
-
-def save_token(token, expires_in=5184000):
-    data = {
-        "token": token,
-        "expires_at": time.time() + expires_in,
-        "generated_at": time.strftime("%Y-%m-%d %H:%M:%S")
-    }
-    with open(TOKEN_PATH, "w") as f:
-        json.dump(data, f, indent=2)
-
-def get_token():
-    token = load_token()
-    if token:
-        return token
-    env_token = os.environ.get("META_TOKEN")
-    if env_token:
-        save_token(env_token, 5184000)
-        return env_token
-    raise Exception("Token não encontrado. Defina META_TOKEN no ambiente ou execute: python gerar-dashboard.py --token=SEU_TOKEN")
-
-# ===== API =====
-
-def api_get(path, params=None):
-    token = get_token()
-    headers = {"Authorization": f"Bearer {token}"}
-    url = f"{BASE_URL}/{path}"
-    resp = requests.get(url, headers=headers, params=params)
-    data = resp.json()
-    if "error" in data:
-        raise Exception(f"API {path}: {data['error']}")
-    return data
-
-def fetch_all(path, params=None):
-    if params is None:
-        params = {}
-    items = []
-    result = api_get(path, params)
-    items.extend(result.get("data", []))
-    next_url = result.get("paging", {}).get("next")
-    while next_url:
-        resp = requests.get(next_url)
-        result = resp.json()
-        items.extend(result.get("data", []))
-        next_url = result.get("paging", {}).get("next")
-    return items
-
-def safe_float(v, default=0.0):
-    try: return float(v)
-    except: return default
-
-def safe_int(v, default=0):
-    try: return int(v)
-    except: return default
-
-def parse_actions(insight):
-    leads = 0
-    for a in insight.get("actions", []):
-        if a.get("action_type") in ("lead", "leadgen", "onsite_conversion.lead_grouped_instant_form"):
-            leads += int(a.get("value", 0))
-    cpl = None
-    for cap in insight.get("cost_per_action_type", []):
-        if cap.get("action_type") in ("lead", "leadgen", "onsite_conversion.lead_grouped_instant_form"):
-            try: cpl = float(cap.get("value", "0"))
-            except: pass
-    return leads, cpl
-
-def fetch_data_for_range(since_date, until_date):
-    period_len = (until_date - since_date).days
-    prev_until = since_date - datetime.timedelta(days=1)
-    prev_since = since_date - datetime.timedelta(days=period_len + 1)
-
+def fetch_insights_for_range(since_date, until_date, prev_since, prev_until):
     def tr(s, u):
         return json.dumps({"since": s.isoformat(), "until": u.isoformat()})
 
-    campaigns = fetch_all(f"{AD_ACCOUNT}/campaigns", {"fields": "id,name,status,objective", "limit": 50})
-
-    daily = fetch_all(f"{AD_ACCOUNT}/insights", {
-        "time_range": tr(since_date, until_date),
-        "time_increment": 1,
-        "fields": "date_start,spend,impressions,clicks,ctr,cpc,cpm,reach",
-        "limit": 100
-    })
-
-    current = fetch_all(f"{AD_ACCOUNT}/insights", {
-        "time_range": tr(since_date, until_date),
-        "fields": "spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type",
-        "limit": 10
-    })
-
-    previous = fetch_all(f"{AD_ACCOUNT}/insights", {
-        "time_range": tr(prev_since, prev_until),
-        "fields": "spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type",
-        "limit": 10
-    })
-
-    camp_rows = fetch_all(f"{AD_ACCOUNT}/insights", {
-        "time_range": tr(since_date, until_date),
-        "level": "campaign",
-        "fields": "campaign_name,spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type",
-        "limit": 50
-    })
-
-    ads = fetch_all(f"{AD_ACCOUNT}/ads", {
-        "fields": "id,name,status,creative{thumbnail_url,image_url,title,body},insights{spend,impressions,clicks,ctr,cpc}",
-        "limit": 50
-    })
-
-    return {
-        "today": until_date,
-        "since": since_date,
-        "campaigns": campaigns,
-        "daily": daily,
-        "current": current[0] if current else {},
-        "previous": previous[0] if previous else {},
-        "camp_rows": camp_rows,
-        "ads": ads
-    }
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+        fut_d = ex.submit(fetch_all, f"{AD_ACCOUNT}/insights", {
+            "time_range": tr(since_date, until_date),
+            "time_increment": 1,
+            "fields": "date_start,spend,impressions,clicks,ctr,cpc,cpm,reach",
+            "limit": 100
+        })
+        fut_c = ex.submit(fetch_all, f"{AD_ACCOUNT}/insights", {
+            "time_range": tr(since_date, until_date),
+            "fields": "spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type",
+            "limit": 10
+        })
+        fut_p = ex.submit(fetch_all, f"{AD_ACCOUNT}/insights", {
+            "time_range": tr(prev_since, prev_until),
+            "fields": "spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type",
+            "limit": 10
+        })
+        fut_r = ex.submit(fetch_all, f"{AD_ACCOUNT}/insights", {
+            "time_range": tr(since_date, until_date),
+            "level": "campaign",
+            "fields": "campaign_name,spend,impressions,clicks,ctr,cpc,cpm,reach,frequency,actions,cost_per_action_type",
+            "limit": 50
+        })
+        daily = fut_d.result()
+        current = fut_c.result()
+        previous = fut_p.result()
+        camp_rows = fut_r.result()
+    return daily, current, previous, camp_rows
 
 def get_data(since=None, until=None):
     today = datetime.date.today()
@@ -170,12 +89,31 @@ def get_data(since=None, until=None):
         until = today
     cache_key = f"{since.isoformat()}_{until.isoformat()}"
     now = time.time()
-    if cache["data"] and now < cache["expires_at"] and cache["key"] == cache_key:
-        return cache["data"]
-    cache["data"] = fetch_data_for_range(since, until)
-    cache["expires_at"] = now + cache["ttl"]
-    cache["key"] = cache_key
-    return cache["data"]
+
+    if insights_cache["data"] and now < insights_cache["expires_at"] and insights_cache["key"] == cache_key:
+        return insights_cache["data"]
+
+    period_len = (until - since).days
+    prev_until = since - datetime.timedelta(days=1)
+    prev_since = since - datetime.timedelta(days=period_len + 1)
+
+    campaigns, ads = get_static_data()
+    daily, current, previous, camp_rows = fetch_insights_for_range(since, until, prev_since, prev_until)
+
+    data = {
+        "today": until,
+        "since": since,
+        "campaigns": campaigns,
+        "daily": daily,
+        "current": current[0] if current else {},
+        "previous": previous[0] if previous else {},
+        "camp_rows": camp_rows,
+        "ads": ads
+    }
+    insights_cache["data"] = data
+    insights_cache["expires_at"] = now + insights_cache["ttl"]
+    insights_cache["key"] = cache_key
+    return data
 
 # ===== HELPERS DE FORMATAÇÃO =====
 
@@ -341,8 +279,10 @@ def dashboard():
 
 @app.route("/api/refresh")
 def api_refresh():
-    cache["data"] = None
-    cache["expires_at"] = 0
+    insights_cache["data"] = None
+    insights_cache["expires_at"] = 0
+    static_cache["campaigns"] = None
+    static_cache["expires_at"] = 0
     return jsonify({"status": "ok", "message": "Cache limpo. Próximo acesso buscará dados novos."})
 
 @app.route("/api/health")
