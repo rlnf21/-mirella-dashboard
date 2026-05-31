@@ -147,7 +147,7 @@ def fetch_insights_for_range(since_date, until_date, prev_since, prev_until):
         fut_d = ex.submit(fetch_all, f"{AD_ACCOUNT}/insights", {
             "time_range": tr(since_date, until_date),
             "time_increment": 1,
-            "fields": "date_start,spend,impressions,clicks,ctr,cpc,cpm,reach",
+            "fields": "date_start,spend,impressions,clicks,ctr,cpc,cpm,reach,actions{action_type,value}",
             "limit": 100
         })
         fut_c = ex.submit(fetch_all, f"{AD_ACCOUNT}/insights", {
@@ -406,7 +406,8 @@ def dashboard_novo():
 
         daily_labels = [x.get("date_start","") for x in d["daily"]]
         daily_spend = [safe_float(x.get("spend")) for x in d["daily"]]
-        daily_imps = [safe_int(x.get("impressions")) for x in d["daily"]]
+        daily_reach = [safe_int(x.get("reach")) for x in d["daily"]]
+        daily_leads = [parse_actions(x)[0] for x in d["daily"]]
 
         camp_table = build_camp_table(d["camp_rows"], since, until)
 
@@ -438,7 +439,8 @@ def dashboard_novo():
             cards=cards,
             daily_labels=json.dumps(daily_labels),
             daily_spend=json.dumps(daily_spend),
-            daily_imps=json.dumps(daily_imps),
+            daily_reach=json.dumps(daily_reach),
+            daily_leads=json.dumps(daily_leads),
             camp_table=camp_table,
             gender_labels=json.dumps(gender_labels),
             gender_values=json.dumps(gender_values),
