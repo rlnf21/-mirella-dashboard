@@ -529,6 +529,15 @@ window.addEventListener('load', function() {
 document.getElementById('loading-overlay').classList.remove('show');
 });
 
+// Safety: hide loading overlay after 60s to prevent freeze
+setTimeout(function() {
+var el = document.getElementById('loading-overlay');
+if (el && el.classList.contains('show')) {
+el.classList.remove('show');
+el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px">Aguarde, carregando...</p>';
+}
+}, 60000);
+
 // Table sorting
 document.querySelectorAll('#camp-table th').forEach(th => {
 th.addEventListener('click', function() {
