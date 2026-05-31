@@ -31,7 +31,87 @@ TOKEN_PATH = os.path.join(SCRIPT_DIR, TOKEN_FILE)
 static_cache = {"campaigns": None, "ads": None, "expires_at": 0}
 insights_cache = {"data": None, "expires_at": 0, "ttl": 300, "key": None}
 
-def get_static_data():
+app = Flask(__name__)
+
+# ===== TOKEN =====
+
+def load_token():
+    if os.path.exists(TOKEN_PATH):
+        try:
+            with open(TOKEN_PATH, "r") as f:
+                data = json.load(f)
+            if data.get("expires_at", 0) > time.time() - 86400:
+                return data["token"]
+        except:
+            pass
+    return None
+
+def save_token(token, expires_in=5184000):
+    data = {
+        "token": token,
+        "expires_at": time.time() + expires_in,
+        "generated_at": time.strftime("%Y-%m-%d %H:%M:%S")
+    }
+    with open(TOKEN_PATH, "w") as f:
+        json.dump(data, f, indent=2)
+
+def get_token():
+    token = load_token()
+    if token:
+        return token
+    env_token = os.environ.get("META_TOKEN")
+    if env_token:
+        save_token(env_token, 5184000)
+        return env_token
+    raise Exception("Token não encontrado. Defina META_TOKEN no ambiente ou execute: python gerar-dashboard.py --token=SEU_TOKEN")
+
+# ===== API =====
+
+def api_get(path, params=None):
+    token = get_token()
+    headers = {"Authorization": f"Bearer {token}"}
+    url = f"{BASE_URL}/{path}"
+    resp = requests.get(url, headers=headers, params=params)
+    data = resp.json()
+    if "error" in data:
+        raise Exception(f"API {path}: {data['error']}")
+    return data
+
+def fetch_all(path, params=None):
+    if params is None:
+        params = {}
+    items = []
+    result = api_get(path, params)
+    items.extend(result.get("data", []))
+    next_url = result.get("paging", {}).get("next")
+    while next_url:
+        resp = requests.get(next_url)
+        result = resp.json()
+        items.extend(result.get("data", []))
+        next_url = result.get("paging", {}).get("next")
+    return items
+
+def safe_float(v, default=0.0):
+    try: return float(v)
+    except: return default
+
+def safe_int(v, default=0):
+    try: return int(v)
+    except: return default
+
+def parse_actions(insight):
+    leads = 0
+    for a in insight.get("actions", []):
+        if a.get("action_type") in ("lead", "leadgen", "onsite_conversion.lead_grouped_instant_form"):
+            leads += int(a.get("value", 0))
+    cpl = None
+    for cap in insight.get("cost_per_action_type", []):
+        if cap.get("action_type") in ("lead", "leadgen", "onsite_conversion.lead_grouped_instant_form"):
+            try: cpl = float(cap.get("value", "0"))
+            except: pass
+    return leads, cpl
+
+# ===== FETCH =====
     now = time.time()
     if static_cache["campaigns"] and now < static_cache["expires_at"]:
         return static_cache["campaigns"], static_cache["ads"]
