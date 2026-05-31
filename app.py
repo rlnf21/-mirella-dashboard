@@ -308,6 +308,8 @@ def build_cards(cur, prev):
          "delta": fmt_delta(pct(c_leads, p_leads)), "tooltip": "Total de leads gerados"},
         {"icon": "fa-eye", "label": "Alcance", "value": f"{c_reach:,}".replace(",", "."),
          "delta": fmt_delta(pct(c_reach, p_reach)), "tooltip": "Pessoas alcançadas"},
+        {"icon": "fa-mouse-pointer", "label": "Cliques", "value": f"{c_clicks:,}".replace(",", "."),
+         "delta": fmt_delta(pct(c_clicks, p_clicks)), "tooltip": "Total de cliques nos anúncios"},
         {"icon": "fa-mouse-pointer", "label": "CPC", "value": fmt_cpc(c_cpc),
          "delta": fmt_delta(pct(c_cpc, p_cpc), reverse=True), "tooltip": "Custo por clique"},
         {"icon": "fa-percent", "label": "CTR", "value": fmt_ctr(c_ctr),
